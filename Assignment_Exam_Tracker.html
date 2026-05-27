@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assignment and Exam Tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d9e2ec;
+      --panel: #ffffff;
+      --soft: #f4f7fb;
+      --accent: #1769aa;
+      --accent-dark: #0f4f82;
+      --success: #1f7a4d;
+      --warning: #8a5a00;
+      --danger: #a93535;
+      --high: #b42318;
+      --medium: #9a6700;
+      --low: #216e4e;
+      --shadow: 0 18px 48px rgba(39, 55, 77, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(234, 244, 255, 0.98), rgba(247, 249, 252, 0.98) 48%, rgba(239, 246, 242, 0.98)),
+        url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9d8e8' stroke-width='1' opacity='0.45'%3E%3Cpath d='M0 40h120M0 80h120M40 0v120M80 0v120'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 8px 0 2px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .badge {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 10px 24px rgba(23, 105, 170, 0.24);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .status {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border: 1px solid rgba(31, 122, 77, 0.35);
+      border-radius: 8px;
+      background: white;
+      color: var(--success);
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric,
+    .tracker-panel,
+    .list-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .metric {
+      padding: 14px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .tracker-panel {
+      align-self: start;
+      padding: 16px;
+    }
+
+    .section-title {
+      margin: 0 0 13px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+      font: 14px Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+
+    input,
+    select {
+      height: 42px;
+      padding: 0 11px;
+    }
+
+    textarea {
+      min-height: 78px;
+      max-height: 150px;
+      padding: 11px;
+      resize: vertical;
+      line-height: 1.42;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.14);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 10px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .controls,
+    .list-actions,
+    .item-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .controls {
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0 14px;
+      background: var(--accent);
+      color: white;
+      font: 800 14px Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: white;
+      color: var(--accent-dark);
+    }
+
+    button.danger {
+      border-color: rgba(169, 53, 53, 0.35);
+      background: white;
+      color: var(--danger);
+    }
+
+    button.small {
+      min-height: 34px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .list-panel {
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 580px;
+    }
+
+    .list-head,
+    .filters {
+      border-bottom: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+    }
+
+    .list-head strong {
+      font-size: 15px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 12px 16px;
+    }
+
+    .filters label {
+      margin-top: 0;
+    }
+
+    .items {
+      padding: 16px;
+      overflow: auto;
+      background: var(--soft);
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 260px;
+      border: 1px dashed #b8c7d8;
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+      background: rgba(255, 255, 255, 0.72);
+      padding: 20px;
+    }
+
+    .tracker-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--accent);
+      border-radius: 8px;
+      background: white;
+    }
+
+    .tracker-item.done {
+      opacity: 0.72;
+    }
+
+    .tracker-item.done h3,
+    .tracker-item.done .meta {
+      text-decoration: line-through;
+    }
+
+    .tracker-item.high {
+      border-left-color: var(--high);
+    }
+
+    .tracker-item.medium {
+      border-left-color: var(--medium);
+    }
+
+    .tracker-item.low {
+      border-left-color: var(--low);
+    }
+
+    .tracker-item h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pill.exam {
+      color: #0f4f82;
+      background: #e7f0ff;
+    }
+
+    .pill.assignment {
+      color: #216e4e;
+      background: #e7f6ee;
+    }
+
+    .pill.overdue {
+      color: var(--danger);
+      background: #ffebe9;
+    }
+
+    .pill.soon {
+      color: var(--warning);
+      background: #fff3cd;
+    }
+
+    .notes {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .item-actions {
+      justify-content: flex-end;
+      align-content: start;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        width: min(100% - 20px, 760px);
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .summary,
+      .filters,
+      .form-grid,
+      .tracker-item {
+        grid-template-columns: 1fr;
+      }
+
+      .item-actions {
+        justify-content: flex-start;
+      }
+
+      .controls button,
+      .list-actions button {
+        flex: 1 1 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="badge">ET</div>
+        <div>
+          <h1>Assignment and Exam Tracker</h1>
+          <p class="subtitle">Add school deadlines, spot what is coming next, and keep the data ready for future timetable planning.</p>
+        </div>
+      </div>
+      <div class="status" id="saveStatus">Saved locally</div>
+    </header>
+
+    <section class="summary" aria-label="Tracker summary">
+      <div class="metric">
+        <span>Total items</span>
+        <strong id="totalCount">0</strong>
+      </div>
+      <div class="metric">
+        <span>Due this week</span>
+        <strong id="weekCount">0</strong>
+      </div>
+      <div class="metric">
+        <span>Overdue</span>
+        <strong id="overdueCount">0</strong>
+      </div>
+      <div class="metric">
+        <span>Completed</span>
+        <strong id="doneCount">0</strong>
+      </div>
+    </section>
+
+    <main>
+      <aside class="tracker-panel">
+        <h2 class="section-title" id="formTitle">Add deadline</h2>
+        <form id="trackerForm">
+          <div class="form-grid">
+            <div>
+              <label for="itemType">Type</label>
+              <select id="itemType" required>
+                <option value="Assignment">Assignment</option>
+                <option value="Exam">Exam</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="priority">Priority</label>
+              <select id="priority" required>
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="subject">Subject</label>
+              <input id="subject" type="text" autocomplete="off" placeholder="Science" required>
+            </div>
+
+            <div>
+              <label for="dueDate">Date</label>
+              <input id="dueDate" type="date" required>
+            </div>
+
+            <div class="wide">
+              <label for="title">Title</label>
+              <input id="title" type="text" autocomplete="off" placeholder="Chapter test or lab report" required>
+            </div>
+
+            <div class="wide">
+              <label for="notes">Notes</label>
+              <textarea id="notes" placeholder="Chapters to revise, materials needed, teacher instructions..."></textarea>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button type="submit" id="submitButton">Add item</button>
+            <button type="button" class="secondary" id="resetButton">Reset form</button>
+          </div>
+        </form>
+      </aside>
+
+      <section class="list-panel" aria-label="Upcoming assignments and exams">
+        <div class="list-head">
+          <strong>Upcoming work</strong>
+          <div class="list-actions">
+            <button type="button" class="secondary small" id="seedButton">Add samples</button>
+            <button type="button" class="danger small" id="clearDoneButton">Clear completed</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div>
+            <label for="typeFilter">Show</label>
+            <select id="typeFilter">
+              <option value="All">All</option>
+              <option value="Assignment">Assignments</option>
+              <option value="Exam">Exams</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter">
+              <option value="Open">Open</option>
+              <option value="All">All</option>
+              <option value="Done">Completed</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="sortBy">Sort by</label>
+            <select id="sortBy">
+              <option value="date">Soonest date</option>
+              <option value="priority">Highest priority</option>
+              <option value="subject">Subject</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="items" id="items"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const storageKey = "genwiseAssignmentExamTracker";
+    const form = document.getElementById("trackerForm");
+    const formTitle = document.getElementById("formTitle");
+    const itemType = document.getElementById("itemType");
+    const priority = document.getElementById("priority");
+    const subject = document.getElementById("subject");
+    const dueDate = document.getElementById("dueDate");
+    const title = document.getElementById("title");
+    const notes = document.getElementById("notes");
+    const submitButton = document.getElementById("submitButton");
+    const resetButton = document.getElementById("resetButton");
+    const seedButton = document.getElementById("seedButton");
+    const clearDoneButton = document.getElementById("clearDoneButton");
+    const typeFilter = document.getElementById("typeFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const sortBy = document.getElementById("sortBy");
+    const itemsEl = document.getElementById("items");
+    const saveStatus = document.getElementById("saveStatus");
+    const totalCount = document.getElementById("totalCount");
+    const weekCount = document.getElementById("weekCount");
+    const overdueCount = document.getElementById("overdueCount");
+    const doneCount = document.getElementById("doneCount");
+
+    let trackerItems = loadItems();
+    let editingId = null;
+
+    function loadItems() {
+      const stored = localStorage.getItem(storageKey);
+      if (!stored) {
+        return [];
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveItems(message) {
+      localStorage.setItem(storageKey, JSON.stringify(trackerItems));
+      saveStatus.textContent = message || "Saved locally";
+      window.setTimeout(() => {
+        saveStatus.textContent = "Saved locally";
+      }, 1400);
+    }
+
+    function todayDate() {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      return now;
+    }
+
+    function parseDate(value) {
+      const date = new Date(`${value}T00:00:00`);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function daysUntil(value) {
+      const diff = parseDate(value).getTime() - todayDate().getTime();
+      return Math.round(diff / 86400000);
+    }
+
+    function formatDate(value) {
+      return parseDate(value).toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function urgencyLabel(item) {
+      if (item.done) {
+        return "Completed";
+      }
+
+      const days = daysUntil(item.dueDate);
+      if (days < 0) {
+        return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`;
+      }
+
+      if (days === 0) {
+        return "Due today";
+      }
+
+      if (days === 1) {
+        return "Due tomorrow";
+      }
+
+      return `${days} days left`;
+    }
+
+    function itemClass(item) {
+      const classes = ["tracker-item", item.priority.toLowerCase()];
+      if (item.done) {
+        classes.push("done");
+      }
+      return classes.join(" ");
+    }
+
+    function urgencyClass(item) {
+      if (item.done) {
+        return "";
+      }
+
+      const days = daysUntil(item.dueDate);
+      if (days < 0) {
+        return "overdue";
+      }
+
+      if (days <= 3) {
+        return "soon";
+      }
+
+      return "";
+    }
+
+    function priorityRank(value) {
+      return { High: 3, Medium: 2, Low: 1 }[value] || 0;
+    }
+
+    function filteredItems() {
+      return trackerItems
+        .filter((item) => typeFilter.value === "All" || item.type === typeFilter.value)
+        .filter((item) => {
+          if (statusFilter.value === "All") {
+            return true;
+          }
+          if (statusFilter.value === "Done") {
+            return item.done;
+          }
+          if (statusFilter.value === "Overdue") {
+            return !item.done && daysUntil(item.dueDate) < 0;
+          }
+          return !item.done;
+        })
+        .sort((a, b) => {
+          if (sortBy.value === "priority") {
+            return priorityRank(b.priority) - priorityRank(a.priority) || a.dueDate.localeCompare(b.dueDate);
+          }
+          if (sortBy.value === "subject") {
+            return a.subject.localeCompare(b.subject) || a.dueDate.localeCompare(b.dueDate);
+          }
+          return a.dueDate.localeCompare(b.dueDate) || priorityRank(b.priority) - priorityRank(a.priority);
+        });
+    }
+
+    function renderSummary() {
+      const openItems = trackerItems.filter((item) => !item.done);
+      totalCount.textContent = trackerItems.length;
+      weekCount.textContent = openItems.filter((item) => {
+        const days = daysUntil(item.dueDate);
+        return days >= 0 && days <= 7;
+      }).length;
+      overdueCount.textContent = openItems.filter((item) => daysUntil(item.dueDate) < 0).length;
+      doneCount.textContent = trackerItems.filter((item) => item.done).length;
+    }
+
+    function renderItems() {
+      const items = filteredItems();
+      itemsEl.innerHTML = "";
+
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No matching assignments or exams yet. Add one from the form to begin tracking.";
+        itemsEl.appendChild(empty);
+        renderSummary();
+        return;
+      }
+
+      for (const item of items) {
+        const article = document.createElement("article");
+        article.className = itemClass(item);
+
+        const details = document.createElement("div");
+        const heading = document.createElement("h3");
+        heading.textContent = item.title;
+        details.appendChild(heading);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.appendChild(pill(item.type, item.type.toLowerCase()));
+        meta.appendChild(pill(item.subject));
+        meta.appendChild(pill(formatDate(item.dueDate)));
+        meta.appendChild(pill(item.priority));
+        meta.appendChild(pill(urgencyLabel(item), urgencyClass(item)));
+        details.appendChild(meta);
+
+        if (item.notes) {
+          const note = document.createElement("p");
+          note.className = "notes";
+          note.textContent = item.notes;
+          details.appendChild(note);
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "item-actions";
+        actions.appendChild(actionButton(item.done ? "Reopen" : "Done", "secondary", () => toggleDone(item.id)));
+        actions.appendChild(actionButton("Edit", "secondary", () => editItem(item.id)));
+        actions.appendChild(actionButton("Delete", "danger", () => deleteItem(item.id)));
+
+        article.appendChild(details);
+        article.appendChild(actions);
+        itemsEl.appendChild(article);
+      }
+
+      renderSummary();
+    }
+
+    function pill(text, className) {
+      const span = document.createElement("span");
+      span.className = className ? `pill ${className}` : "pill";
+      span.textContent = text;
+      return span;
+    }
+
+    function actionButton(text, className, onClick) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `small ${className}`;
+      button.textContent = text;
+      button.addEventListener("click", onClick);
+      return button;
+    }
+
+    function resetForm() {
+      form.reset();
+      priority.value = "Medium";
+      editingId = null;
+      formTitle.textContent = "Add deadline";
+      submitButton.textContent = "Add item";
+      title.focus();
+    }
+
+    function upsertItem(event) {
+      event.preventDefault();
+
+      const item = {
+        id: editingId || crypto.randomUUID(),
+        type: itemType.value,
+        priority: priority.value,
+        subject: subject.value.trim(),
+        dueDate: dueDate.value,
+        title: title.value.trim(),
+        notes: notes.value.trim(),
+        done: editingId ? trackerItems.find((entry) => entry.id === editingId)?.done || false : false
+      };
+
+      if (editingId) {
+        trackerItems = trackerItems.map((entry) => entry.id === editingId ? item : entry);
+        saveItems("Item updated");
+      } else {
+        trackerItems.push(item);
+        saveItems("Item added");
+      }
+
+      resetForm();
+      renderItems();
+    }
+
+    function editItem(id) {
+      const item = trackerItems.find((entry) => entry.id === id);
+      if (!item) {
+        return;
+      }
+
+      editingId = id;
+      itemType.value = item.type;
+      priority.value = item.priority;
+      subject.value = item.subject;
+      dueDate.value = item.dueDate;
+      title.value = item.title;
+      notes.value = item.notes;
+      formTitle.textContent = "Edit deadline";
+      submitButton.textContent = "Save changes";
+      title.focus();
+    }
+
+    function toggleDone(id) {
+      trackerItems = trackerItems.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+        return { ...item, done: !item.done };
+      });
+      saveItems("Status updated");
+      renderItems();
+    }
+
+    function deleteItem(id) {
+      trackerItems = trackerItems.filter((item) => item.id !== id);
+      if (editingId === id) {
+        resetForm();
+      }
+      saveItems("Item deleted");
+      renderItems();
+    }
+
+    function clearCompleted() {
+      trackerItems = trackerItems.filter((item) => !item.done);
+      saveItems("Completed cleared");
+      renderItems();
+    }
+
+    function addSamples() {
+      const base = todayDate();
+      const addDays = (days) => {
+        const date = new Date(base);
+        date.setDate(base.getDate() + days);
+        return date.toISOString().slice(0, 10);
+      };
+
+      trackerItems.push(
+        {
+          id: crypto.randomUUID(),
+          type: "Assignment",
+          priority: "High",
+          subject: "Science",
+          dueDate: addDays(2),
+          title: "Lab report",
+          notes: "Finish observation table and conclusion.",
+          done: false
+        },
+        {
+          id: crypto.randomUUID(),
+          type: "Exam",
+          priority: "Medium",
+          subject: "Math",
+          dueDate: addDays(6),
+          title: "Algebra test",
+          notes: "Revise linear equations and word problems.",
+          done: false
+        }
+      );
+      saveItems("Samples added");
+      renderItems();
+    }
+
+    form.addEventListener("submit", upsertItem);
+    resetButton.addEventListener("click", resetForm);
+    seedButton.addEventListener("click", addSamples);
+    clearDoneButton.addEventListener("click", clearCompleted);
+    typeFilter.addEventListener("change", renderItems);
+    statusFilter.addEventListener("change", renderItems);
+    sortBy.addEventListener("change", renderItems);
+
+    renderItems();
+  </script>
+</body>
+</html>
