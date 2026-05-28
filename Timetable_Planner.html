@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timetable Planner</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d9e2ec;
+      --panel: #ffffff;
+      --soft: #f4f7fb;
+      --accent: #1769aa;
+      --accent-dark: #0f4f82;
+      --success: #1f7a4d;
+      --warning: #8a5a00;
+      --danger: #a93535;
+      --math: #1b6ca8;
+      --english: #8f4d9d;
+      --science: #16845b;
+      --social: #b85f19;
+      --computer: #4753b8;
+      --general: #617083;
+      --shadow: 0 18px 48px rgba(39, 55, 77, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(234, 244, 255, 0.98), rgba(247, 249, 252, 0.98) 48%, rgba(239, 246, 242, 0.98)),
+        url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9d8e8' stroke-width='1' opacity='0.45'%3E%3Cpath d='M0 40h120M0 80h120M40 0v120M80 0v120'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 8px 0 2px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .badge {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 10px 24px rgba(23, 105, 170, 0.24);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .status {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border: 1px solid rgba(31, 122, 77, 0.35);
+      border-radius: 8px;
+      background: white;
+      color: var(--success);
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .planner-panel,
+    .hero,
+    .panel,
+    .week {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .planner-panel {
+      align-self: start;
+      padding: 16px;
+    }
+
+    .left-rail {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .section-title {
+      margin: 0 0 13px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+      font: 14px Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+
+    input,
+    select {
+      height: 42px;
+      padding: 0 11px;
+    }
+
+    textarea {
+      min-height: 84px;
+      max-height: 160px;
+      padding: 11px;
+      resize: vertical;
+      line-height: 1.42;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.14);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 10px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .hint {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .mini-list {
+      margin: 10px 0 0;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .controls,
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0 14px;
+      background: var(--accent);
+      color: white;
+      font: 800 14px Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: white;
+      color: var(--accent-dark);
+    }
+
+    button.small {
+      min-height: 34px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .output {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) 300px;
+      gap: 16px;
+    }
+
+    .hero {
+      padding: 22px;
+      display: grid;
+      align-content: space-between;
+      min-height: 210px;
+    }
+
+    .hero h2 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .meta,
+    .plan-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .meta {
+      margin-top: 20px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: #263244;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      height: 12px;
+      border-radius: 999px;
+      background: #dfe7ef;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), var(--accent));
+      transition: width 160ms ease;
+    }
+
+    .timetable-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .weeks {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .week-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 6px;
+      background: #dfe7ef;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .week-tab {
+      flex: 1 1 120px;
+      min-height: 42px;
+      border-radius: 7px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .week-tab.active {
+      background: white;
+      border-color: #b8c5d6;
+      box-shadow: 0 6px 18px rgba(24, 33, 47, 0.1);
+      color: var(--accent-dark);
+    }
+
+    .week {
+      overflow: hidden;
+    }
+
+    .week:not(.active) {
+      display: none;
+    }
+
+    .week-head {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .week-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .week-title strong {
+      font-size: 17px;
+    }
+
+    .days {
+      display: grid;
+    }
+
+    .day {
+      display: grid;
+      grid-template-columns: 124px 1fr;
+      gap: 18px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .day:last-child {
+      border-bottom: 0;
+    }
+
+    .date {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .plan-line {
+      margin-bottom: 12px;
+    }
+
+    .subject {
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .math { background: var(--math); }
+    .english { background: var(--english); }
+    .science { background: var(--science); }
+    .social { background: var(--social); }
+    .computer { background: var(--computer); }
+    .general { background: var(--general); }
+    .break { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+
+    .goal {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 8px;
+      align-items: start;
+      color: #283548;
+      margin: 8px 0;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .session-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .session-row .goal {
+      margin: 8px 0;
+    }
+
+    .edit-panel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+    }
+
+    .edit-panel[hidden] {
+      display: none;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 2px 0 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .goal input:checked + span {
+      color: #7a8696;
+      text-decoration: line-through;
+    }
+
+    .side-list {
+      margin: 0;
+      padding-left: 20px;
+      color: #2a3749;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .side-list li {
+      margin: 8px 0;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      border: 1px dashed #b8c7d8;
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+      background: rgba(255, 255, 255, 0.72);
+      padding: 20px;
+    }
+
+    @media (max-width: 980px) {
+      main,
+      .top-grid,
+      .timetable-layout {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+    @media (max-width: 680px) {
+      .app {
+        width: min(100% - 20px, 760px);
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .form-grid,
+      .day {
+        grid-template-columns: 1fr;
+      }
+
+      .controls button,
+      .actions button {
+        flex: 1 1 150px;
+      }
+
+      .session-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="badge">TP</div>
+        <div>
+          <h1>Timetable Planner</h1>
+          <p class="subtitle">Enter busy hours, add study needs, and generate a timetable from saved assignments and exams.</p>
+        </div>
+      </div>
+      <div class="status" id="status">Ready</div>
+    </header>
+
+    <main>
+      <aside class="left-rail">
+        <section class="planner-panel">
+          <h2 class="section-title">Planner inputs</h2>
+          <form id="plannerForm">
+          <div class="form-grid">
+            <div>
+              <label for="schoolStart">School start</label>
+              <input id="schoolStart" type="time" value="08:00" required>
+            </div>
+            <div>
+              <label for="schoolEnd">School end</label>
+              <input id="schoolEnd" type="time" value="15:00" required>
+            </div>
+            <div>
+              <label for="dayStart">Weekend start</label>
+              <input id="dayStart" type="time" value="09:30" required>
+            </div>
+            <div>
+              <label for="dayEnd">Latest study</label>
+              <input id="dayEnd" type="time" value="21:00" required>
+            </div>
+            <div>
+              <label for="sessionLength">Session length</label>
+              <select id="sessionLength">
+                <option value="30">30 minutes</option>
+                <option value="45" selected>45 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+            <div>
+              <label for="breakLength">Breaks</label>
+              <select id="breakLength">
+                <option value="15">15 minutes</option>
+                <option value="20" selected>20 minutes</option>
+                <option value="30">30 minutes</option>
+              </select>
+            </div>
+            <div>
+              <label for="planDays">Plan length</label>
+              <select id="planDays">
+                <option value="7">1 week</option>
+                <option value="14" selected>2 weeks</option>
+                <option value="21">3 weeks</option>
+              </select>
+            </div>
+            <div>
+              <label for="maxDaily">Daily limit</label>
+              <select id="maxDaily">
+                <option value="120">2 hours</option>
+                <option value="180" selected>3 hours</option>
+                <option value="240">4 hours</option>
+              </select>
+            </div>
+            <div class="wide">
+              <label for="workTypeFocus">Higher priority</label>
+              <select id="workTypeFocus">
+                <option value="balanced" selected>Balance exams and assignments</option>
+                <option value="exams">Exams first</option>
+                <option value="assignments">Assignments first</option>
+              </select>
+              <p class="hint">Planner score = priority strength + deadline urgency + this exam/assignment preference.</p>
+            </div>
+          </div>
+
+          <label for="activities">Extra curriculum timings</label>
+          <textarea id="activities" placeholder="Basketball, 15:30, 17:00&#10;Music class, 18:00, 19:00">Sports practice, 15:30, 17:00</textarea>
+          <p class="hint">One activity per line: name, start time, end time. These are treated as busy hours every day.</p>
+
+          <label for="studyNeeds">Things needed to be studied</label>
+          <textarea id="studyNeeds" placeholder="Math formulas&#10;Science diagrams&#10;English grammar">Revise weak chapters
+Practice questions
+Make short notes</textarea>
+          <p class="hint">The planner combines these with open exams and assignments from feature 2.</p>
+
+          <div class="mini-list" id="trackerSummary">Loading tracker data...</div>
+
+          <div class="controls">
+            <button type="submit">Create timetable</button>
+            <button type="button" class="secondary" id="saveInputs">Save inputs</button>
+            <button type="button" class="secondary" id="loadSamples">Add tracker samples</button>
+          </div>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="routineTitle">
+          <h2 id="routineTitle">Daily routine</h2>
+          <ul class="side-list">
+            <li>Keep 15-30 minute breaks between sessions.</li>
+            <li>Do practice questions after revising notes.</li>
+            <li>End the day with 5 bullet points learned.</li>
+          </ul>
+        </section>
+
+        <section class="panel edit-panel" id="editPanel" aria-labelledby="editTitle" hidden>
+          <h2 id="editTitle">Edit session</h2>
+          <label for="editSubject">Subject</label>
+          <input id="editSubject" type="text" autocomplete="off">
+          <label for="editTitleInput">Task</label>
+          <input id="editTitleInput" type="text" autocomplete="off">
+          <label for="editType">Type</label>
+          <select id="editType">
+            <option value="Study">Study</option>
+            <option value="Practice">Practice</option>
+            <option value="Revision">Revision</option>
+            <option value="Exam">Exam</option>
+            <option value="Assignment">Assignment</option>
+          </select>
+          <div class="actions">
+            <button type="button" class="small" id="saveEdit">Save edit</button>
+            <button type="button" class="secondary small" id="cancelEdit">Cancel</button>
+          </div>
+        </section>
+
+        <section class="panel edit-panel" id="addPanel" aria-labelledby="addTitle" hidden>
+          <h2 id="addTitle">Add session</h2>
+          <label for="addTask">Tracker task</label>
+          <select id="addTask"></select>
+          <label for="addDuration">Duration</label>
+          <select id="addDuration">
+            <option value="30">30 minutes</option>
+            <option value="45" selected>45 minutes</option>
+            <option value="60">60 minutes</option>
+            <option value="90">90 minutes</option>
+          </select>
+          <label for="addPhase">Session type</label>
+          <select id="addPhase">
+            <option value="Study">Study</option>
+            <option value="Revision">Revision</option>
+          </select>
+          <div class="actions">
+            <button type="button" class="small" id="saveAdd">Add session</button>
+            <button type="button" class="secondary small" id="cancelAdd">Cancel</button>
+          </div>
+        </section>
+      </aside>
+
+      <section class="output" aria-label="Generated timetable">
+        <div class="top-grid">
+          <section class="hero" aria-labelledby="planTitle">
+            <div>
+              <h2 id="planTitle">Study Timetable</h2>
+              <p class="subtitle" id="planSubtitle">Create a plan to see free-time study sessions arranged around school, activities, exams, and assignments.</p>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="progressTitle">
+            <h2 id="progressTitle">Progress</h2>
+            <div class="progress-label">
+              <span id="progressText">0 of 0 sessions done</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar" aria-hidden="true">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="actions">
+              <button type="button" class="secondary small" id="todayButton">Open current week</button>
+              <button type="button" class="secondary small" id="resetChecks">Reset checks</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="timetable-layout">
+          <section class="weeks" id="weeksArea" aria-label="Weekly timetable">
+            <div class="empty">Your generated timetable will appear here.</div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const trackerStorageKey = "genwiseAssignmentExamTracker";
+    const inputStorageKey = "genwiseTimetablePlannerInputs";
+    const progressPrefix = "genwise-timetable-session:";
+    const form = document.getElementById("plannerForm");
+    const statusEl = document.getElementById("status");
+    const trackerSummary = document.getElementById("trackerSummary");
+    const deadlineList = document.getElementById("deadlineList");
+    const busyList = document.getElementById("busyList");
+    const weeksArea = document.getElementById("weeksArea");
+    const planSubtitle = document.getElementById("planSubtitle");
+    const heroMeta = document.getElementById("heroMeta");
+    const progressText = document.getElementById("progressText");
+    const progressPercent = document.getElementById("progressPercent");
+    const progressFill = document.getElementById("progressFill");
+
+    const fields = {
+      schoolStart: document.getElementById("schoolStart"),
+      schoolEnd: document.getElementById("schoolEnd"),
+      dayStart: document.getElementById("dayStart"),
+      dayEnd: document.getElementById("dayEnd"),
+      sessionLength: document.getElementById("sessionLength"),
+      breakLength: document.getElementById("breakLength"),
+      planDays: document.getElementById("planDays"),
+      maxDaily: document.getElementById("maxDaily"),
+      workTypeFocus: document.getElementById("workTypeFocus"),
+      activities: document.getElementById("activities"),
+      studyNeeds: document.getElementById("studyNeeds")
+    };
+
+    let currentPlan = [];
+    let editingSessionId = null;
+    let addingDate = "";
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+      window.setTimeout(() => {
+        statusEl.textContent = "Ready";
+      }, 1500);
+    }
+
+    function loadTrackerItems() {
+      const stored = localStorage.getItem(trackerStorageKey);
+      if (!stored) {
+        return [];
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function openTrackerItems() {
+      const today = startOfDay(new Date());
+      return loadTrackerItems()
+        .filter((item) => !item.done && item.dueDate)
+        .filter((item) => dateOnly(item.dueDate) >= today)
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate) || priorityRank(b.priority) - priorityRank(a.priority));
+    }
+
+    function saveInputs() {
+      const payload = {};
+      Object.keys(fields).forEach((key) => {
+        payload[key] = fields[key].value;
+      });
+      localStorage.setItem(inputStorageKey, JSON.stringify(payload));
+      setStatus("Inputs saved");
+    }
+
+    function loadInputs() {
+      const stored = localStorage.getItem(inputStorageKey);
+      if (!stored) {
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        Object.keys(fields).forEach((key) => {
+          if (parsed[key]) {
+            fields[key].value = parsed[key];
+          }
+        });
+      } catch {
+        return;
+      }
+    }
+
+    function startOfDay(date) {
+      const clean = new Date(date);
+      clean.setHours(0, 0, 0, 0);
+      return clean;
+    }
+
+    function dateOnly(value) {
+      return startOfDay(new Date(`${value}T00:00:00`));
+    }
+
+    function addDays(date, amount) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + amount);
+      return next;
+    }
+
+    function toDateInput(date) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function priorityRank(value) {
+      return { High: 3, Medium: 2, Low: 1 }[value] || 1;
+    }
+
+    function minutesFromTime(value) {
+      const parts = value.split(":").map(Number);
+      return (parts[0] * 60) + parts[1];
+    }
+
+    function timeFromMinutes(value) {
+      const hours = Math.floor(value / 60);
+      const minutes = value % 60;
+      const suffix = hours >= 12 ? "pm" : "am";
+      const displayHours = hours % 12 || 12;
+      return `${displayHours}:${String(minutes).padStart(2, "0")} ${suffix}`;
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function parseActivities() {
+      return fields.activities.value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split(",").map((part) => part.trim());
+          return {
+            name: parts[0] || "Activity",
+            start: parts[1] || "15:30",
+            end: parts[2] || "17:00"
+          };
+        })
+        .filter((item) => item.start.includes(":") && item.end.includes(":"));
+    }
+
+    function parseStudyNeeds() {
+      return fields.studyNeeds.value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+
+    function isSchoolDay(date) {
+      const day = date.getDay();
+      return day >= 1 && day <= 5;
+    }
+
+    function mergeIntervals(intervals) {
+      const sorted = intervals
+        .filter((item) => item.end > item.start)
+        .sort((a, b) => a.start - b.start);
+      const merged = [];
+
+      for (const interval of sorted) {
+        const previous = merged[merged.length - 1];
+        if (!previous || interval.start > previous.end) {
+          merged.push({ ...interval });
+        } else {
+          previous.end = Math.max(previous.end, interval.end);
+          previous.name = `${previous.name}, ${interval.name}`;
+        }
+      }
+
+      return merged;
+    }
+
+    function freeWindowsForDay(date, activities) {
+      const dayStart = isSchoolDay(date) ? minutesFromTime(fields.schoolEnd.value) : minutesFromTime(fields.dayStart.value);
+      const dayEnd = minutesFromTime(fields.dayEnd.value);
+      const busy = [];
+
+      if (isSchoolDay(date)) {
+        busy.push({
+          name: "School",
+          start: minutesFromTime(fields.schoolStart.value),
+          end: minutesFromTime(fields.schoolEnd.value)
+        });
+      }
+
+      activities.forEach((activity) => {
+        busy.push({
+          name: activity.name,
+          start: minutesFromTime(activity.start),
+          end: minutesFromTime(activity.end)
+        });
+      });
+
+      const merged = mergeIntervals(busy);
+      let cursor = dayStart;
+      const windows = [];
+
+      merged.forEach((interval) => {
+        if (interval.end <= dayStart || interval.start >= dayEnd) {
+          return;
+        }
+        if (interval.start > cursor) {
+          windows.push({ start: cursor, end: Math.min(interval.start, dayEnd) });
+        }
+        cursor = Math.max(cursor, interval.end);
+      });
+
+      if (cursor < dayEnd) {
+        windows.push({ start: cursor, end: dayEnd });
+      }
+
+      return windows.filter((window) => window.end - window.start >= Number(fields.sessionLength.value));
+    }
+
+    function workTypeBoost(type) {
+      if (fields.workTypeFocus.value === "exams" && type === "Exam") {
+        return 18;
+      }
+      if (fields.workTypeFocus.value === "assignments" && type === "Assignment") {
+        return 18;
+      }
+      if (fields.workTypeFocus.value === "balanced") {
+        return type === "Exam" ? 9 : type === "Assignment" ? 8 : 0;
+      }
+      return 0;
+    }
+
+    function taskScore(item, planDate) {
+      const due = item.dueDate ? dateOnly(item.dueDate) : addDays(planDate, 14);
+      const daysLeft = Math.max(0, Math.round((due - planDate) / 86400000));
+      const priorityStrength = priorityRank(item.priority) * 16;
+      const urgencyStrength = Math.round(44 / (daysLeft + 1));
+      const typeStrength = workTypeBoost(item.type);
+      return priorityStrength + urgencyStrength + typeStrength;
+    }
+
+    function phaseForWeek(index, totalWeeks) {
+      if (totalWeeks === 1) {
+        return "Studying";
+      }
+      if (index === 0) {
+        return "Studying";
+      }
+      if (index === totalWeeks - 1) {
+        return "Revision";
+      }
+      return "Practice";
+    }
+
+    function phaseVerb(phase) {
+      if (phase === "Practice") {
+        return "Practice";
+      }
+      if (phase === "Revision") {
+        return "Revise";
+      }
+      return "Study";
+    }
+
+    function buildTaskQueue(deadlines, studyNeeds) {
+      const tasks = [];
+      deadlines.forEach((item) => {
+        const due = dateOnly(item.dueDate);
+        const daysLeft = Math.max(1, Math.round((due - startOfDay(new Date())) / 86400000));
+        const baseSessions = item.type === "Exam" ? 3 : 2;
+        const prioritySessions = priorityRank(item.priority) - 1;
+        const urgencySessions = daysLeft <= 2 ? 3 : daysLeft <= 5 ? 2 : daysLeft <= 10 ? 1 : 0;
+        const preferenceSessions = workTypeBoost(item.type) >= 18 ? 1 : 0;
+        tasks.push({
+          sourceId: item.id,
+          subject: item.subject || item.title,
+          title: item.title,
+          type: item.type,
+          dueDate: item.dueDate,
+          priority: item.priority || "Medium",
+          note: item.notes || "",
+          remaining: baseSessions + prioritySessions + urgencySessions + preferenceSessions
+        });
+      });
+
+      studyNeeds.forEach((need, index) => {
+        tasks.push({
+          sourceId: `need-${index}`,
+          subject: subjectFromNeed(need),
+          title: need,
+          type: "Study",
+          dueDate: "",
+          priority: "Medium",
+          note: "",
+          remaining: 2
+        });
+      });
+
+      return tasks;
+    }
+
+    function subjectsForWeek(tasks) {
+      return Array.from(new Set(tasks.map((task) => normalizeSubject(task.subject)).filter(Boolean)));
+    }
+
+    function subjectFromNeed(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes("math")) return "Math";
+      if (lower.includes("english")) return "English";
+      if (lower.includes("science")) return "Science";
+      if (lower.includes("social") || lower.includes("history") || lower.includes("geo")) return "Social Science";
+      if (lower.includes("computer") || lower.includes("coding") || lower.includes("program")) return "Computer Science";
+      return "General";
+    }
+
+    function makeStudySlots(freeWindows, sessionLength, breakLength, maxDaily) {
+      const slots = [];
+      let studiedToday = 0;
+
+      freeWindows.forEach((window) => {
+        let cursor = window.start;
+        while (cursor + sessionLength <= window.end && studiedToday + sessionLength <= maxDaily) {
+          slots.push({
+            start: cursor,
+            end: cursor + sessionLength,
+            breakAfter: cursor + sessionLength + breakLength <= window.end ? breakLength : 0
+          });
+          studiedToday += sessionLength;
+          cursor += sessionLength + breakLength;
+        }
+      });
+
+      return slots;
+    }
+
+    function nextDayExamTasks(tasks, date) {
+      const tomorrow = toDateInput(addDays(date, 1));
+      const seen = new Set();
+      return tasks.filter((task) => {
+        const subject = normalizeSubject(task.subject);
+        if (task.type !== "Exam" || task.dueDate !== tomorrow || seen.has(subject)) {
+          return false;
+        }
+        seen.add(subject);
+        return true;
+      });
+    }
+
+    function chooseTask(tasks, date, usedSubjects, requiredTask, blockedSubjects = new Set(), requiredSubject = "") {
+      if (requiredTask && requiredTask.remaining > 0) {
+        requiredTask.remaining -= 1;
+        return requiredTask;
+      }
+
+      const available = tasks.filter((task) => task.remaining > 0 && (!task.dueDate || dateOnly(task.dueDate) >= date));
+      if (!available.length) {
+        return null;
+      }
+
+      const requiredChoices = requiredSubject ? available.filter((task) => normalizeSubject(task.subject) === requiredSubject) : [];
+      const pool = requiredChoices.length ? requiredChoices : available;
+      const differentSubject = pool.filter((task) => {
+        const subject = normalizeSubject(task.subject);
+        return !usedSubjects.has(subject) && !blockedSubjects.has(subject);
+      });
+      const choices = differentSubject.length ? differentSubject : pool.filter((task) => {
+        const subject = normalizeSubject(task.subject);
+        return !usedSubjects.has(subject);
+      });
+      if (!choices.length) {
+        return null;
+      }
+      choices.sort((a, b) => {
+        const scoreDiff = taskScore(b, date) - taskScore(a, date);
+        if (scoreDiff !== 0) {
+          return scoreDiff;
+        }
+        if (a.dueDate && b.dueDate && a.dueDate !== b.dueDate) {
+          return a.dueDate.localeCompare(b.dueDate);
+        }
+        return a.subject.localeCompare(b.subject);
+      });
+
+      choices[0].remaining -= 1;
+      return choices[0];
+    }
+
+    function normalizeSubject(subject) {
+      return subject.trim().toLowerCase();
+    }
+
+    function uniqueSubjects(tasks) {
+      return Array.from(new Set(tasks.map((task) => normalizeSubject(task.subject)).filter(Boolean)));
+    }
+
+    function taskForSubject(tasks, subject, date) {
+      return tasks
+        .filter((task) => normalizeSubject(task.subject) === subject)
+        .sort((a, b) => taskScore(b, date) - taskScore(a, date))[0] || null;
+    }
+
+    function rankedSubjects(tasks, date) {
+      return uniqueSubjects(tasks).sort((a, b) => {
+        const taskA = taskForSubject(tasks, a, date);
+        const taskB = taskForSubject(tasks, b, date);
+        return (taskB ? taskScore(taskB, date) : 0) - (taskA ? taskScore(taskA, date) : 0);
+      });
+    }
+
+    function buildSessionsForDay(date, slots, tasks, weekSignatures, weekCovered, phase) {
+      const allSubjects = rankedSubjects(tasks, date);
+      const nextExamTasks = nextDayExamTasks(tasks, date);
+      const finalSubjects = new Set(nextExamTasks.map((task) => normalizeSubject(task.subject)));
+      const availableSubjects = allSubjects.filter((subject) => !finalSubjects.has(subject));
+      const finalCount = Math.min(nextExamTasks.length, slots.length);
+      const normalSlotCount = Math.max(0, slots.length - finalCount);
+      let selectedSubjects = [];
+
+      const missingSubjects = allSubjects.filter((subject) => !weekCovered.has(subject) && !finalSubjects.has(subject));
+      missingSubjects.forEach((subject) => {
+        if (selectedSubjects.length < normalSlotCount && !selectedSubjects.includes(subject)) {
+          selectedSubjects.push(subject);
+        }
+      });
+
+      for (let offset = 0; selectedSubjects.length < normalSlotCount && offset < availableSubjects.length; offset += 1) {
+        const subject = availableSubjects[offset];
+        if (!selectedSubjects.includes(subject)) {
+          selectedSubjects.push(subject);
+        }
+      }
+
+      const finalSessionSubjects = nextExamTasks.slice(0, finalCount).map((task) => normalizeSubject(task.subject));
+      let candidateSubjects = [...selectedSubjects, ...finalSessionSubjects];
+      let signature = candidateSubjects.join(">");
+
+      while (signature && weekSignatures.has(signature) && selectedSubjects.length) {
+        selectedSubjects.pop();
+        candidateSubjects = [...selectedSubjects, ...finalSessionSubjects];
+        signature = candidateSubjects.join(">");
+      }
+
+      if (signature && weekSignatures.has(signature)) {
+        return [];
+      }
+
+      if (signature) {
+        weekSignatures.add(signature);
+      }
+
+      return candidateSubjects.map((subject, index) => {
+        const finalTask = nextExamTasks.find((task) => normalizeSubject(task.subject) === subject);
+        const task = index >= selectedSubjects.length && finalTask ? finalTask : taskForSubject(tasks, subject, date);
+        if (!task) {
+          return null;
+        }
+
+        const slot = slots[index];
+        weekCovered.add(subject);
+        return {
+          ...task,
+          id: `${toDateInput(date)}-${index}-${task.sourceId}-${phase}`,
+          start: slot.start,
+          end: slot.end,
+          breakAfter: slot.breakAfter,
+          compulsory: Boolean(finalTask && index >= selectedSubjects.length),
+          phase
+        };
+      }).filter(Boolean);
+    }
+
+    function hasExamTasks(tasks) {
+      return tasks.some((task) => task.type === "Exam");
+    }
+
+    function fillExamMinimum(date, slots, sessions, tasks, phase) {
+      if (!hasExamTasks(tasks) || sessions.length >= 2 || !slots.length) {
+        return sessions;
+      }
+
+      const usedStarts = new Set(sessions.map((session) => session.start));
+      const openSlots = slots.filter((slot) => !usedStarts.has(slot.start));
+      const examTasks = tasks
+        .filter((task) => task.type === "Exam")
+        .sort((a, b) => taskScore(b, date) - taskScore(a, date));
+
+      while (sessions.length < 2 && openSlots.length && examTasks.length) {
+        const slot = openSlots.shift();
+        const task = examTasks[(sessions.length - 1 + examTasks.length) % examTasks.length];
+        sessions.push({
+          ...task,
+          id: `${toDateInput(date)}-${sessions.length}-${task.sourceId}-exam-minimum`,
+          start: slot.start,
+          end: slot.end,
+          breakAfter: slot.breakAfter,
+          compulsory: false,
+          phase: "Revision",
+          examMinimum: true
+        });
+      }
+
+      return sessions.sort((a, b) => a.start - b.start);
+    }
+
+    function generatePlan(event) {
+      event.preventDefault();
+      saveInputs();
+
+      const deadlines = openTrackerItems();
+      const studyNeeds = parseStudyNeeds();
+      const tasks = buildTaskQueue(deadlines, studyNeeds);
+      const activities = parseActivities();
+      const planDays = Number(fields.planDays.value);
+      const sessionLength = Number(fields.sessionLength.value);
+      const breakLength = Number(fields.breakLength.value);
+      const maxDaily = Number(fields.maxDaily.value);
+      const start = startOfDay(new Date());
+      const queue = tasks.length ? tasks : buildTaskQueue([], ["Review notes", "Practice questions", "Make short notes"]);
+      const totalWeeks = Math.ceil(planDays / 7);
+      const days = [];
+      let weekSignatures = new Set();
+      let weekCovered = new Set();
+
+      for (let dayIndex = 0; dayIndex < planDays; dayIndex += 1) {
+        const date = addDays(start, dayIndex);
+        const weekIndex = Math.floor(dayIndex / 7);
+        const phase = phaseForWeek(weekIndex, totalWeeks);
+        if (dayIndex % 7 === 0) {
+          weekSignatures = new Set();
+          weekCovered = new Set();
+        }
+        const freeWindows = freeWindowsForDay(date, activities);
+        const slots = makeStudySlots(freeWindows, sessionLength, breakLength, maxDaily);
+        const sessions = fillExamMinimum(date, slots, buildSessionsForDay(date, slots, queue, weekSignatures, weekCovered, phase), queue, phase);
+
+        days.push({ date, sessions });
+      }
+
+      currentPlan = chunkWeeks(days).map((week, index) => enforceWeeklyRules(week, queue, subjectsForWeek(queue), index, totalWeeks));
+      renderPlan(currentPlan, deadlines, activities);
+      setStatus("Timetable created");
+    }
+
+    function enforceWeeklyRules(week, tasks, weeklySubjects, weekIndex, totalWeeks) {
+      const phase = phaseForWeek(weekIndex, totalWeeks);
+      const usedInWeek = new Set(week.flatMap((day) => day.sessions.map((session) => normalizeSubject(session.subject))));
+
+      weeklySubjects.forEach((subject) => {
+        if (usedInWeek.has(subject)) {
+          return;
+        }
+
+        const replacementTask = tasks.find((task) => normalizeSubject(task.subject) === subject);
+        const target = findCoverageTarget(week, subject);
+        if (!replacementTask || !target) {
+          return;
+        }
+
+        const session = target.day.sessions[target.index];
+        target.day.sessions[target.index] = {
+          ...replacementTask,
+          id: `${toDateInput(target.day.date)}-${target.index}-${replacementTask.sourceId}-coverage`,
+          start: session.start,
+          end: session.end,
+          breakAfter: session.breakAfter,
+          compulsory: false,
+          phase
+        };
+        usedInWeek.add(subject);
+      });
+
+      return enforceUniqueDailySchedules(week);
+    }
+
+    function findCoverageTarget(week, subject) {
+      for (const day of week) {
+        const daySubjects = new Set(day.sessions.map((session) => normalizeSubject(session.subject)));
+        if (daySubjects.has(subject)) {
+          continue;
+        }
+
+        for (let index = day.sessions.length - 1; index >= 0; index -= 1) {
+          if (!day.sessions[index].compulsory) {
+            return { day, index };
+          }
+        }
+      }
+
+      return null;
+    }
+
+    function enforceUniqueDailySchedules(week) {
+      const signatures = new Set();
+
+      week.forEach((day) => {
+        if (day.sessions.some((session) => session.type === "Exam")) {
+          return;
+        }
+
+        let signature = daySignature(day);
+        while (signature && signatures.has(signature)) {
+          const removableIndex = findRemovableSessionIndex(day);
+          if (removableIndex === -1) {
+            break;
+          }
+          day.sessions.splice(removableIndex, 1);
+          signature = daySignature(day);
+        }
+        if (signature) {
+          signatures.add(signature);
+        }
+      });
+
+      return week;
+    }
+
+    function daySignature(day) {
+      return day.sessions.map((session) => normalizeSubject(session.subject)).join(">");
+    }
+
+    function findRemovableSessionIndex(day) {
+      for (let index = day.sessions.length - 1; index >= 0; index -= 1) {
+        if (!day.sessions[index].compulsory) {
+          return index;
+        }
+      }
+      return -1;
+    }
+
+    function chunkWeeks(days) {
+      const weeks = [];
+      for (let index = 0; index < days.length; index += 7) {
+        weeks.push(days.slice(index, index + 7));
+      }
+      return weeks;
+    }
+
+    function renderTrackerSummary() {
+      const deadlines = openTrackerItems();
+      if (!deadlines.length) {
+        trackerSummary.textContent = "Feature 2 has no open assignments or exams yet. Add some there, or use sample tracker data here.";
+        if (deadlineList) {
+          deadlineList.innerHTML = "<li>No open tracker deadlines found yet.</li>";
+        }
+        return;
+      }
+
+      trackerSummary.textContent = `${deadlines.length} open tracker item${deadlines.length === 1 ? "" : "s"} ready for timetable planning.`;
+      if (deadlineList) {
+        deadlineList.innerHTML = deadlines
+          .slice(0, 8)
+          .map((item) => `<li>${escapeHtml(item.subject)} ${escapeHtml(item.type.toLowerCase())}: ${escapeHtml(item.title)} - ${formatDate(dateOnly(item.dueDate))}</li>`)
+          .join("");
+      }
+    }
+
+    function renderPlan(weeks, deadlines, activities) {
+      if (!weeks.length) {
+        weeksArea.innerHTML = "<div class=\"empty\">No timetable could be created from the current inputs.</div>";
+        updateProgress();
+        return;
+      }
+
+      const totalSessions = weeks.flat().reduce((sum, day) => sum + day.sessions.length, 0);
+      const firstDay = weeks[0][0].date;
+      const lastWeek = weeks[weeks.length - 1];
+      const lastDay = lastWeek[lastWeek.length - 1].date;
+      planSubtitle.textContent = `A focused plan from ${formatDate(firstDay)} to ${formatDate(lastDay)}, using ${deadlines.length} tracker deadline${deadlines.length === 1 ? "" : "s"} and ${totalSessions} study session${totalSessions === 1 ? "" : "s"}.`;
+
+      if (heroMeta) {
+        heroMeta.innerHTML = "";
+      }
+
+      const tabs = weeks.map((_, index) => `<button type="button" class="week-tab ${index === 0 ? "active" : ""}" role="tab" aria-selected="${index === 0}" data-week-tab="${index}">Week ${index + 1}</button>`).join("");
+      const weekHtml = weeks.map((week, index) => renderWeek(week, index, weeks.length)).join("");
+      weeksArea.innerHTML = `<div class="week-tabs" role="tablist" aria-label="Choose week">${tabs}</div>${weekHtml}`;
+
+      if (busyList) {
+        busyList.innerHTML = [
+          `<li>School: ${fields.schoolStart.value}-${fields.schoolEnd.value} on weekdays.</li>`,
+          ...activities.map((activity) => `<li>${escapeHtml(activity.name)}: ${escapeHtml(activity.start)}-${escapeHtml(activity.end)}.</li>`)
+        ].join("");
+      }
+
+      document.querySelectorAll(".week-tab").forEach((tab) => {
+        tab.addEventListener("click", () => activateWeek(Number(tab.dataset.weekTab)));
+      });
+
+      document.querySelectorAll("input[type='checkbox'][data-session]").forEach((box) => {
+        box.checked = localStorage.getItem(progressPrefix + box.dataset.session) === "1";
+        box.addEventListener("change", () => {
+          localStorage.setItem(progressPrefix + box.dataset.session, box.checked ? "1" : "0");
+          updateProgress();
+        });
+      });
+
+      document.querySelectorAll("button[data-edit-session]").forEach((button) => {
+        button.addEventListener("click", () => openEditPanel(button.dataset.editSession));
+      });
+
+      document.querySelectorAll("button[data-add-day]").forEach((button) => {
+        button.addEventListener("click", () => openAddPanel(button.dataset.addDay));
+      });
+
+      updateProgress();
+    }
+
+    function renderWeek(week, index, totalWeeks) {
+      const first = week[0].date;
+      const last = week[week.length - 1].date;
+      const sessions = week.reduce((sum, day) => sum + day.sessions.length, 0);
+      return `
+        <section class="week ${index === 0 ? "active" : ""}" data-start="${toDateInput(first)}" data-end="${toDateInput(last)}">
+          <div class="week-head">
+            <span class="week-title">
+              <strong>Week ${index + 1}</strong>
+              <span class="pill">${phaseForWeek(index, totalWeeks)}</span>
+              <span class="pill">${formatDate(first)}-${formatDate(last)}</span>
+              <span class="pill">${sessions} session${sessions === 1 ? "" : "s"}</span>
+            </span>
+          </div>
+          <div class="days">
+            ${week.map(renderDay).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDay(day) {
+      if (!day.sessions.length) {
+        return `
+          <article class="day">
+            <div class="date">${formatDate(day.date)}</div>
+            <div>
+              <div class="plan-line"><span class="subject break">No free study slot</span></div>
+              <p class="hint">This day is full based on your school, activity, and study limit settings.</p>
+              <button type="button" class="secondary small" data-add-day="${toDateInput(day.date)}">Add</button>
+            </div>
+          </article>
+        `;
+      }
+
+      return `
+        <article class="day">
+          <div class="date">${formatDate(day.date)}</div>
+          <div>
+            <div class="plan-line">
+              ${day.sessions.map((session) => `<span class="subject ${subjectClass(session.subject)}">${escapeHtml(session.subject)} ${Math.round((session.end - session.start) / 60 * 10) / 10}h</span>`).join("")}
+            </div>
+            ${day.sessions.map(renderSession).join("")}
+            <button type="button" class="secondary small" data-add-day="${toDateInput(day.date)}">Add</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSession(session) {
+      const deadlineText = session.dueDate ? ` for ${escapeHtml(session.type.toLowerCase())} due ${formatDate(dateOnly(session.dueDate))}` : "";
+      const finalText = session.compulsory ? " Final next-day exam revision:" : "";
+      const breakText = session.breakAfter ? ` Break ${session.breakAfter} minutes after this.` : "";
+      return `
+        <div class="session-row">
+          <label class="goal">
+            <input type="checkbox" data-session="${escapeHtml(session.id)}">
+            <span>${timeFromMinutes(session.start)}-${timeFromMinutes(session.end)}:${finalText} ${phaseVerb(session.phase)} ${escapeHtml(session.title)}${deadlineText}.${breakText}</span>
+          </label>
+          <button type="button" class="secondary small" data-edit-session="${escapeHtml(session.id)}">Edit</button>
+        </div>
+      `;
+    }
+
+    function subjectClass(subject) {
+      const lower = subject.toLowerCase();
+      if (lower.includes("math")) return "math";
+      if (lower.includes("english")) return "english";
+      if (lower.includes("science") && !lower.includes("social")) return "science";
+      if (lower.includes("social") || lower.includes("history") || lower.includes("geo")) return "social";
+      if (lower.includes("computer") || lower.includes("cs") || lower.includes("coding")) return "computer";
+      return "general";
+    }
+
+    function activateWeek(index) {
+      document.querySelectorAll(".week").forEach((week, weekIndex) => {
+        week.classList.toggle("active", weekIndex === index);
+      });
+
+      document.querySelectorAll(".week-tab").forEach((tab, tabIndex) => {
+        const active = tabIndex === index;
+        tab.classList.toggle("active", active);
+        tab.setAttribute("aria-selected", String(active));
+      });
+    }
+
+    function openCurrentWeek() {
+      const today = startOfDay(new Date());
+      let currentIndex = 0;
+      document.querySelectorAll(".week").forEach((week, index) => {
+        const start = dateOnly(week.dataset.start);
+        const end = dateOnly(week.dataset.end);
+        if (today >= start && today <= end) {
+          currentIndex = index;
+        }
+      });
+      activateWeek(currentIndex);
+    }
+
+    function updateProgress() {
+      const boxes = Array.from(document.querySelectorAll("input[type='checkbox'][data-session]"));
+      const total = boxes.length;
+      const done = boxes.filter((box) => box.checked).length;
+      const percent = total ? Math.round((done / total) * 100) : 0;
+      progressText.textContent = `${done} of ${total} sessions done`;
+      progressPercent.textContent = `${percent}%`;
+      progressFill.style.width = `${percent}%`;
+    }
+
+    function resetChecks() {
+      document.querySelectorAll("input[type='checkbox'][data-session]").forEach((box) => {
+        box.checked = false;
+        localStorage.removeItem(progressPrefix + box.dataset.session);
+      });
+      updateProgress();
+      setStatus("Checks reset");
+    }
+
+    function findSessionById(id) {
+      for (const week of currentPlan) {
+        for (const day of week) {
+          const session = day.sessions.find((item) => item.id === id);
+          if (session) {
+            return session;
+          }
+        }
+      }
+      return null;
+    }
+
+    function openEditPanel(id) {
+      const session = findSessionById(id);
+      if (!session) {
+        return;
+      }
+
+      editingSessionId = id;
+      document.getElementById("addPanel").hidden = true;
+      document.getElementById("editSubject").value = session.subject;
+      document.getElementById("editTitleInput").value = session.title;
+      document.getElementById("editType").value = session.type === "Practice" || session.type === "Revision" ? session.type : session.type || "Study";
+      document.getElementById("editPanel").hidden = false;
+      document.getElementById("editSubject").focus();
+    }
+
+    function saveSessionEdit() {
+      const session = findSessionById(editingSessionId);
+      if (!session) {
+        return;
+      }
+
+      session.subject = document.getElementById("editSubject").value.trim() || session.subject;
+      session.title = document.getElementById("editTitleInput").value.trim() || session.title;
+      session.type = document.getElementById("editType").value;
+      document.getElementById("editPanel").hidden = true;
+      editingSessionId = null;
+      const deadlines = openTrackerItems();
+      const activities = parseActivities();
+      renderPlan(currentPlan, deadlines, activities);
+      setStatus("Session edited");
+    }
+
+    function cancelSessionEdit() {
+      document.getElementById("editPanel").hidden = true;
+      editingSessionId = null;
+    }
+
+    function findDayByDate(value) {
+      for (const week of currentPlan) {
+        for (const day of week) {
+          if (toDateInput(day.date) === value) {
+            return day;
+          }
+        }
+      }
+      return null;
+    }
+
+    function openAddPanel(dateValue) {
+      addingDate = dateValue;
+      document.getElementById("editPanel").hidden = true;
+      const taskSelect = document.getElementById("addTask");
+      const trackerItems = openTrackerItems();
+
+      if (!trackerItems.length) {
+        taskSelect.innerHTML = "<option value=\"\">No tracker tasks available</option>";
+        taskSelect.disabled = true;
+      } else {
+        taskSelect.disabled = false;
+        taskSelect.innerHTML = trackerItems
+          .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.subject)} - ${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`)
+          .join("");
+      }
+
+      document.getElementById("addPanel").hidden = false;
+      taskSelect.focus();
+    }
+
+    function saveAddedSession() {
+      const day = findDayByDate(addingDate);
+      const selectedId = document.getElementById("addTask").value;
+      const task = openTrackerItems().find((item) => item.id === selectedId);
+      if (!day || !task) {
+        return;
+      }
+
+      const duration = Number(document.getElementById("addDuration").value);
+      const breakLength = Number(fields.breakLength.value);
+      const lastSession = day.sessions[day.sessions.length - 1];
+      const start = lastSession ? lastSession.end + breakLength : (isSchoolDay(day.date) ? minutesFromTime(fields.schoolEnd.value) : minutesFromTime(fields.dayStart.value));
+      const phase = document.getElementById("addPhase").value;
+
+      if (lastSession && !lastSession.breakAfter) {
+        lastSession.breakAfter = breakLength;
+      }
+
+      day.sessions.push({
+        sourceId: task.id,
+        subject: task.subject || task.title,
+        title: task.title,
+        type: task.type,
+        dueDate: task.dueDate,
+        priority: task.priority || "Medium",
+        note: task.notes || "",
+        id: `${addingDate}-${day.sessions.length}-${task.id}-manual`,
+        start,
+        end: start + duration,
+        breakAfter: 0,
+        compulsory: false,
+        phase
+      });
+
+      day.sessions.sort((a, b) => a.start - b.start);
+      document.getElementById("addPanel").hidden = true;
+      addingDate = "";
+      renderPlan(currentPlan, openTrackerItems(), parseActivities());
+      setStatus("Session added");
+    }
+
+    function cancelAddedSession() {
+      document.getElementById("addPanel").hidden = true;
+      addingDate = "";
+    }
+
+    function addTrackerSamples() {
+      const existing = loadTrackerItems();
+      const today = startOfDay(new Date());
+      const sample = [
+        {
+          id: crypto.randomUUID(),
+          type: "Exam",
+          priority: "High",
+          subject: "Math",
+          dueDate: toDateInput(addDays(today, 6)),
+          title: "Algebra test",
+          notes: "Practice equations and word problems.",
+          done: false
+        },
+        {
+          id: crypto.randomUUID(),
+          type: "Assignment",
+          priority: "Medium",
+          subject: "Science",
+          dueDate: toDateInput(addDays(today, 4)),
+          title: "Lab report",
+          notes: "Finish diagrams and conclusion.",
+          done: false
+        }
+      ];
+      localStorage.setItem(trackerStorageKey, JSON.stringify([...existing, ...sample]));
+      renderTrackerSummary();
+      setStatus("Tracker samples added");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    form.addEventListener("submit", generatePlan);
+    document.getElementById("saveInputs").addEventListener("click", saveInputs);
+    document.getElementById("loadSamples").addEventListener("click", addTrackerSamples);
+    document.getElementById("todayButton").addEventListener("click", openCurrentWeek);
+    document.getElementById("resetChecks").addEventListener("click", resetChecks);
+    document.getElementById("saveEdit").addEventListener("click", saveSessionEdit);
+    document.getElementById("cancelEdit").addEventListener("click", cancelSessionEdit);
+    document.getElementById("saveAdd").addEventListener("click", saveAddedSession);
+    document.getElementById("cancelAdd").addEventListener("click", cancelAddedSession);
+
+    loadInputs();
+    renderTrackerSummary();
+  </script>
+</body>
+</html>
