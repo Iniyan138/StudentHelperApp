@@ -855,7 +855,7 @@
           <button type="button" class="metric active" data-detail="assignments">
             <span>Assignments</span>
             <strong id="assignmentCount">0</strong>
-            <small id="assignmentHint">Due today</small>
+            <small id="assignmentHint">Open work</small>
           </button>
           <button type="button" class="metric" data-detail="exams">
             <span>Exams</span>
@@ -886,7 +886,7 @@
 
       <div class="main-column">
         <section class="panel detail-box" aria-live="polite">
-          <h3 id="detailTitle">Assignments Today</h3>
+          <h3 id="detailTitle">Open Assignments</h3>
           <ul id="detailList"><li>Loading...</li></ul>
         </section>
 
@@ -1212,7 +1212,7 @@
 
     function renderDetail(type) {
       const titles = {
-        assignments: "Assignments Today",
+        assignments: "Open Assignments",
         exams: "Exams Today",
         sessions: "Timetable Sessions",
         routine: "Checked Routine Tasks"
@@ -1463,12 +1463,14 @@
       const plan = loadJson(timetablePlanKey, []);
       const sessions = todaySessions(plan);
       const doneSessions = sessions.filter((session) => session.done || localStorage.getItem(progressPrefix + session.id) === "1");
-      const assignments = items.filter((item) => item.type === "Assignment" && item.dueDate === today);
+      const assignments = items
+        .filter((item) => item.type === "Assignment")
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
       const exams = items.filter((item) => item.type === "Exam" && item.dueDate === today);
       const upcomingExams = items.filter((item) => item.type === "Exam" && daysUntil(item.dueDate) > 0 && daysUntil(item.dueDate) <= 21);
 
       detailData = {
-        assignments: assignments.map((item) => `${item.subject}: ${item.title}`),
+        assignments: assignments.map((item) => `${item.subject}: ${item.title} (${deadlineLabel(item)})`),
         exams: exams.concat(upcomingExams.slice(0, 3)).map((item) => `${item.subject}: ${item.title} (${daysUntil(item.dueDate)} day${daysUntil(item.dueDate) === 1 ? "" : "s"} left)`),
         sessions: sessions.map((session) => `${timeFromMinutes(session.start)} ${session.subject}: ${session.title}`),
         routine: doneSessions.map((session) => `${session.subject}: ${session.title}`)
@@ -1482,7 +1484,7 @@
       document.getElementById("examCount").textContent = exams.length + upcomingExams.length;
       document.getElementById("sessionCount").textContent = sessions.length;
       document.getElementById("doneCount").textContent = doneSessions.length;
-      document.getElementById("assignmentHint").textContent = assignments.length ? "Open tracker to finish them" : "No assignments due today";
+      document.getElementById("assignmentHint").textContent = assignments.length ? "Open assignments" : "No open assignments";
       document.getElementById("examHint").textContent = upcomingExams.length ? "Upcoming exam inside 3 weeks" : "No urgent exam";
       document.getElementById("sessionHint").textContent = sessions.length ? "Planned study blocks" : "No sessions today";
       document.getElementById("doneHint").textContent = doneSessions.length ? "Already checked off" : "Nothing checked yet";
