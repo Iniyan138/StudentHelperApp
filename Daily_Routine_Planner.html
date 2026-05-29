@@ -18,6 +18,9 @@
       --warning: #8a5a00;
       --danger: #a93535;
       --shadow: 0 18px 48px rgba(39, 55, 77, 0.14);
+      --bg-one: rgba(234, 244, 255, 0.98);
+      --bg-two: rgba(247, 249, 252, 0.98);
+      --bg-three: rgba(239, 246, 242, 0.98);
     }
 
     * {
@@ -30,8 +33,26 @@
       font-family: Arial, Helvetica, sans-serif;
       color: var(--ink);
       background:
-        linear-gradient(180deg, rgba(234, 244, 255, 0.98), rgba(247, 249, 252, 0.98) 48%, rgba(239, 246, 242, 0.98)),
+        linear-gradient(180deg, var(--bg-one), var(--bg-two) 48%, var(--bg-three)),
         url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9d8e8' stroke-width='1' opacity='0.45'%3E%3Cpath d='M0 40h120M0 80h120M40 0v120M80 0v120'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    body.theme-dark {
+      color-scheme: dark;
+      --ink: #edf4ff;
+      --muted: #b8c5d8;
+      --line: #314257;
+      --panel: #111c2a;
+      --soft: #17263a;
+      --accent: #4ea3df;
+      --accent-dark: #d8ecff;
+      --success: #70d29d;
+      --warning: #f0bd59;
+      --danger: #ff8989;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      --bg-one: rgba(10, 19, 32, 0.98);
+      --bg-two: rgba(17, 28, 42, 0.98);
+      --bg-three: rgba(12, 35, 42, 0.98);
     }
 
     .app {
@@ -867,6 +888,34 @@
       document.getElementById("genwiseOpenNav").addEventListener("click", () => setOpen(true));
       document.getElementById("genwiseCloseNav").addEventListener("click", () => setOpen(false));
       backdrop.addEventListener("click", () => setOpen(false));
+    })();
+  </script>
+  <script>
+    (() => {
+      const stored = localStorage.getItem("genwiseDashboardTheme");
+      if (!stored) {
+        return;
+      }
+
+      try {
+        const theme = JSON.parse(stored);
+        const hexToRgb = (hex, alpha) => {
+          const value = parseInt(hex.replace("#", ""), 16);
+          const red = (value >> 16) & 255;
+          const green = (value >> 8) & 255;
+          const blue = value & 255;
+          return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+        };
+
+        document.body.classList.toggle("theme-dark", theme.mode === "dark");
+        if (theme.mode === "custom") {
+          document.body.style.setProperty("--bg-one", hexToRgb(theme.colorOne || "#dcefff", 0.94));
+          document.body.style.setProperty("--bg-three", hexToRgb(theme.colorTwo || "#e9f8ef", 0.94));
+          document.body.style.setProperty("--accent", theme.colorOne || "#1769aa");
+        }
+      } catch {
+        localStorage.removeItem("genwiseDashboardTheme");
+      }
     })();
   </script>
 </body>
