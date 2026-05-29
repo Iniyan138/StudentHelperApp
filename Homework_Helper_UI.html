@@ -353,9 +353,119 @@
         width: 100%;
       }
     }
+
+    .genwise-nav-button {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 7;
+      width: 52px;
+      min-height: 46px;
+      padding: 0;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--shadow);
+      font: 800 22px Arial, Helvetica, sans-serif;
+    }
+
+    .genwise-nav-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      background: rgba(15, 30, 45, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+
+    .genwise-nav-drawer {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 9;
+      width: min(330px, calc(100vw - 42px));
+      padding: 18px;
+      background: white;
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      transform: translateX(-105%);
+      transition: transform 160ms ease;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .genwise-nav-drawer.open {
+      transform: translateX(0);
+    }
+
+    .genwise-nav-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .genwise-nav-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .genwise-nav-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .genwise-nav-close {
+      width: 38px;
+      min-height: 38px;
+      padding: 0;
+      background: white;
+      color: var(--accent-dark);
+    }
+
+    .genwise-nav-drawer a {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--accent-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 0 12px;
+    }
+
+    .app {
+      padding-left: 62px;
+    }
+
+    @media (max-width: 700px) {
+      .app {
+        padding-left: 0;
+        padding-top: 76px;
+      }
+    }
   </style>
 </head>
 <body>
+  <button type="button" class="genwise-nav-button" id="genwiseOpenNav" aria-label="Open Genwise menu">☰</button>
+  <div class="genwise-nav-backdrop" id="genwiseNavBackdrop"></div>
+  <nav class="genwise-nav-drawer" id="genwiseNavDrawer" aria-label="Genwise tools">
+    <div class="genwise-nav-head">
+      <h2>Genwise Tools</h2>
+      <button type="button" class="genwise-nav-close" id="genwiseCloseNav" aria-label="Close menu">x</button>
+    </div>
+    <a href="Genwise_Main_UI.html">Dashboard <span>Home</span></a>
+    <a href="Homework_Helper_UI.html">Homework Helper <span>Open</span></a>
+    <a href="Assignment_Exam_Tracker.html">Exam & Assignment Tracker <span>Open</span></a>
+    <a href="Timetable_Planner.html">Timetable Planner <span>Open</span></a>
+    <a href="Daily_Routine_Planner.html">Daily Routine Planner <span>Open</span></a>
+  </nav>
   <div class="app">
     <header>
       <div class="brand">
@@ -615,6 +725,19 @@
 
     applySettings();
     updateTurnCount();
+  </script>
+  <script>
+    (() => {
+      const drawer = document.getElementById("genwiseNavDrawer");
+      const backdrop = document.getElementById("genwiseNavBackdrop");
+      const setOpen = (open) => {
+        drawer.classList.toggle("open", open);
+        backdrop.classList.toggle("open", open);
+      };
+      document.getElementById("genwiseOpenNav").addEventListener("click", () => setOpen(true));
+      document.getElementById("genwiseCloseNav").addEventListener("click", () => setOpen(false));
+      backdrop.addEventListener("click", () => setOpen(false));
+    })();
   </script>
 </body>
 </html>

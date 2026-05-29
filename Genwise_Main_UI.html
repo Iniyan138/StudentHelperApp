@@ -14,8 +14,12 @@
       --soft: #f4f7fb;
       --accent: #1769aa;
       --accent-dark: #0f4f82;
-      --success: #1f7a4d;
-      --shadow: 0 18px 48px rgba(39, 55, 77, 0.14);
+      --green: #1f7a4d;
+      --amber: #9a6500;
+      --red: #a93535;
+      --violet: #7c3f98;
+      --teal: #0f766e;
+      --shadow: 0 16px 40px rgba(39, 55, 77, 0.13);
     }
 
     * {
@@ -28,26 +32,49 @@
       font-family: Arial, Helvetica, sans-serif;
       color: var(--ink);
       background:
-        linear-gradient(180deg, rgba(234, 244, 255, 0.98), rgba(247, 249, 252, 0.98) 48%, rgba(239, 246, 242, 0.98)),
-        url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9d8e8' stroke-width='1' opacity='0.45'%3E%3Cpath d='M0 40h120M0 80h120M40 0v120M80 0v120'/%3E%3C/g%3E%3C/svg%3E");
+        linear-gradient(145deg, rgba(231, 243, 255, 0.95), rgba(249, 251, 253, 0.96) 48%, rgba(239, 248, 244, 0.95)),
+        url("data:image/svg+xml,%3Csvg width='96' height='96' viewBox='0 0 96 96' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9d8e8' stroke-width='1' opacity='0.38'%3E%3Cpath d='M0 32h96M0 64h96M32 0v96M64 0v96'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    button,
+    a.button-link {
+      min-height: 42px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0 14px;
+      background: white;
+      color: var(--accent-dark);
+      font: 800 14px Arial, Helvetica, sans-serif;
+      cursor: pointer;
+      text-decoration: none;
     }
 
     .app {
-      width: min(1280px, calc(100% - 28px));
-      min-height: 100vh;
+      width: min(1360px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 22px 0;
+      min-height: 100vh;
+      padding: 20px 0;
       display: grid;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: auto 1fr;
       gap: 16px;
     }
 
     header {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 8px 0 2px;
+      gap: 14px;
+    }
+
+    .menu-button {
+      width: 48px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: white;
+      font-size: 22px;
+      box-shadow: 0 10px 24px rgba(23, 105, 170, 0.22);
     }
 
     .brand {
@@ -58,8 +85,8 @@
     }
 
     .badge {
-      width: 46px;
-      height: 46px;
+      width: 50px;
+      height: 50px;
       display: grid;
       place-items: center;
       border-radius: 12px;
@@ -67,188 +94,872 @@
       color: white;
       font-weight: 800;
       font-size: 18px;
-      box-shadow: 0 10px 24px rgba(23, 105, 170, 0.24);
       flex: 0 0 auto;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.05;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: 1;
       letter-spacing: 0;
     }
 
     .subtitle {
-      margin: 5px 0 0;
+      margin: 7px 0 0;
       color: var(--muted);
       font-size: 15px;
       line-height: 1.35;
     }
 
-    .status {
-      min-height: 34px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 12px;
-      border: 1px solid rgba(31, 122, 77, 0.35);
-      border-radius: 8px;
-      background: white;
-      color: var(--success);
-      font-weight: 800;
-      font-size: 13px;
-      white-space: nowrap;
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
     }
 
-    .tool-tabs,
-    .workspace {
-      background: var(--panel);
+    .summary-panel,
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: var(--shadow);
       min-width: 0;
     }
 
-    .tool-tabs {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      padding: 10px;
+    .summary-panel {
+      grid-column: 1 / -1;
+      padding: 18px;
     }
 
-    button,
-    a.open-link {
-      min-height: 42px;
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 0 12px;
-      background: white;
-      color: var(--accent-dark);
-      font: 800 14px Arial, Helvetica, sans-serif;
-      cursor: pointer;
-      text-decoration: none;
+    .summary-top,
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.2;
+    }
+
+    .date-chip {
+      min-height: 32px;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      text-align: center;
+      padding: 0 10px;
+      border: 1px solid rgba(31, 122, 77, 0.35);
+      border-radius: 999px;
+      background: #f1f6f3;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
     }
 
-    button.active {
-      background: var(--accent);
-      color: white;
-    }
-
-    .workspace {
+    .metric-grid {
       display: grid;
-      grid-template-rows: auto 1fr;
-      overflow: hidden;
-      min-height: calc(100vh - 182px);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
     }
 
-    .workspace-head {
+    .metric {
+      min-height: 118px;
+      padding: 13px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 6px;
+      text-align: left;
+      border-color: var(--line);
+      background: linear-gradient(180deg, #ffffff, #f5f8fc);
+    }
+
+    .metric.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.12);
+      background: #ffffff;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      align-self: center;
+      font-size: 34px;
+      line-height: 1;
+      color: var(--accent-dark);
+    }
+
+    .metric small {
+      color: var(--muted);
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .main-column,
+    .side-column {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .main-column {
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+      grid-template-areas:
+        "detail calendar"
+        "sessions calendar";
+      align-items: start;
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .detail-box {
+      grid-area: detail;
+      min-height: 168px;
+    }
+
+    .session-panel {
+      grid-area: sessions;
+    }
+
+    .calendar-panel {
+      grid-area: calendar;
+    }
+
+    .detail-box h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .detail-box ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .progress-list,
+    .timeline,
+    .quick-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .subject-row {
+      display: grid;
+      gap: 7px;
+    }
+
+    .subject-line {
       display: flex;
-      align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--line);
-      background: #fbfdff;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
     }
 
-    .workspace-head strong {
-      font-size: 15px;
+    .bar {
+      height: 12px;
+      border-radius: 999px;
+      background: #dfe7ef;
+      overflow: hidden;
     }
 
-    .workspace-head span {
+    .fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .fill.math { background: var(--accent); }
+    .fill.science { background: var(--green); }
+    .fill.english { background: var(--violet); }
+    .fill.social { background: var(--amber); }
+    .fill.computer { background: var(--teal); }
+    .fill.general { background: var(--muted); }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
       color: var(--muted);
       font-size: 13px;
       line-height: 1.35;
     }
 
-    iframe {
+    .timeline-item strong {
+      color: var(--ink);
+    }
+
+    .note {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(31, 122, 77, 0.35);
+      border-radius: 8px;
+      background: #f1f6f3;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .quick-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .quick-actions a,
+    .drawer a {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--accent-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 0 12px;
+    }
+
+    .calendar {
+      display: grid;
+      gap: 8px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .day-name {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .calendar-day {
+      min-height: 62px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .calendar-day.muted {
+      opacity: 0.42;
+    }
+
+    .calendar-day.today {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 2px rgba(23, 105, 170, 0.12);
+    }
+
+    .day-number {
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .calendar-pill {
+      display: block;
       width: 100%;
-      height: 100%;
-      min-height: 720px;
-      border: 0;
+      border-radius: 999px;
+      padding: 3px 6px;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .calendar-pill.exam {
+      background: var(--red);
+    }
+
+    .calendar-pill.assignment {
+      background: var(--accent);
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 30, 45, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+      z-index: 8;
+    }
+
+    .drawer {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: min(330px, calc(100vw - 42px));
+      padding: 18px;
       background: white;
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      transform: translateX(-105%);
+      transition: transform 180ms ease;
+      z-index: 9;
+      display: grid;
+      align-content: start;
+      gap: 12px;
     }
 
-    @media (max-width: 900px) {
-      header {
-        align-items: flex-start;
-        flex-direction: column;
-      }
+    .drawer.open {
+      transform: translateX(0);
+    }
 
-      .tool-tabs {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .drawer h2 {
+      font-size: 18px;
+    }
+
+    .drawer .close {
+      width: 38px;
+      min-height: 38px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    @media (max-width: 1050px) {
+      .dashboard,
+      .main-column {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "detail"
+          "sessions"
+          "calendar";
       }
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 760px) {
       .app {
         width: min(100% - 20px, 760px);
       }
 
-      .tool-tabs {
+      header {
+        grid-template-columns: auto 1fr;
+      }
+
+      header > button:last-child {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+
+      .metric-grid,
+      .quick-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .calendar-day {
+        min-height: 56px;
+        padding: 5px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand {
+        align-items: flex-start;
+      }
+
+      .badge {
+        width: 42px;
+        height: 42px;
+        font-size: 15px;
+      }
+
+      .metric-grid,
+      .quick-actions {
         grid-template-columns: 1fr;
       }
 
-      .workspace-head {
-        align-items: flex-start;
+      .summary-top,
+      .panel-head {
         flex-direction: column;
       }
     }
   </style>
 </head>
 <body>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <nav class="drawer" id="toolDrawer" aria-label="Tools">
+    <div class="drawer-head">
+      <h2>Tools</h2>
+      <button type="button" class="close" id="closeDrawer" aria-label="Close menu">x</button>
+    </div>
+    <a href="Genwise_Main_UI.html">Dashboard <span>Home</span></a>
+    <a href="Homework_Helper_UI.html">Homework Helper <span>Open</span></a>
+    <a href="Assignment_Exam_Tracker.html">Exam & Assignment Tracker <span>Open</span></a>
+    <a href="Timetable_Planner.html">Timetable Planner <span>Open</span></a>
+    <a href="Daily_Routine_Planner.html">Daily Routine Planner <span>Open</span></a>
+    <a href="#calendarPanel" id="calendarLink">Calendar <span>View</span></a>
+  </nav>
+
   <div class="app">
     <header>
+      <button type="button" class="menu-button" id="openDrawer" aria-label="Open tools menu">☰</button>
       <div class="brand">
         <div class="badge">GW</div>
         <div>
           <h1>Genwise Student Helper</h1>
-          <p class="subtitle">One home for homework help, deadlines, timetable planning, and daily routines.</p>
+          <p class="subtitle">Today&apos;s work, progress, deadlines, and tools in one dashboard.</p>
         </div>
       </div>
-      <div class="status">4 tools connected</div>
+      <button type="button" id="refreshDashboard">Refresh</button>
     </header>
 
-    <nav class="tool-tabs" aria-label="Choose a Genwise tool">
-      <button type="button" class="active" data-tool="Homework_Helper_UI.html" data-name="Homework Helper">Homework Helper</button>
-      <button type="button" data-tool="Assignment_Exam_Tracker.html" data-name="Assignment and Exam Tracker">Exam & Assignment Tracker</button>
-      <button type="button" data-tool="Timetable_Planner.html" data-name="Timetable Planner">Timetable Planner</button>
-      <button type="button" data-tool="Daily_Routine_Planner.html" data-name="Daily Routine Planner">Daily Routine Planner</button>
-    </nav>
-
-    <main class="workspace">
-      <div class="workspace-head">
-        <div>
-          <strong id="activeName">Homework Helper</strong>
-          <span id="activePath">Homework_Helper_UI.html</span>
+    <main class="dashboard">
+      <section class="summary-panel" aria-label="Main dashboard">
+        <div class="summary-top">
+          <div>
+            <h2>Today&apos;s Dashboard</h2>
+            <p class="subtitle" id="dashboardSubtitle">Loading today&apos;s plan...</p>
+          </div>
+          <span class="date-chip" id="todayChip">Today</span>
         </div>
-        <a class="open-link" id="openTool" href="Homework_Helper_UI.html" target="_blank" rel="noopener">Open separately</a>
+
+        <div class="metric-grid">
+          <button type="button" class="metric active" data-detail="assignments">
+            <span>Assignments</span>
+            <strong id="assignmentCount">0</strong>
+            <small id="assignmentHint">Due today</small>
+          </button>
+          <button type="button" class="metric" data-detail="exams">
+            <span>Exams</span>
+            <strong id="examCount">0</strong>
+            <small id="examHint">Today and soon</small>
+          </button>
+          <button type="button" class="metric" data-detail="sessions">
+            <span>Sessions</span>
+            <strong id="sessionCount">0</strong>
+            <small id="sessionHint">Timetable work</small>
+          </button>
+          <button type="button" class="metric" data-detail="routine">
+            <span>Done</span>
+            <strong id="doneCount">0</strong>
+            <small id="doneHint">Checked tasks</small>
+          </button>
+        </div>
+      </section>
+
+      <div class="main-column">
+        <section class="panel detail-box" aria-live="polite">
+          <h3 id="detailTitle">Assignments Today</h3>
+          <ul id="detailList"><li>Loading...</li></ul>
+        </section>
+
+        <section class="panel session-panel" aria-label="Next study timeline">
+          <div class="panel-head">
+            <h2>Next Sessions</h2>
+          </div>
+          <div class="timeline" id="timeline"></div>
+          <div class="note" id="dashboardNote">Checking saved student data...</div>
+        </section>
+
+        <section class="panel calendar-panel" id="calendarPanel" aria-label="Calendar">
+          <div class="panel-head">
+            <h2 id="calendarTitle">Calendar</h2>
+          </div>
+          <div class="calendar" id="calendar"></div>
+        </section>
       </div>
-      <iframe id="toolFrame" title="Selected Genwise tool" src="Homework_Helper_UI.html"></iframe>
+
+      <aside class="side-column">
+        <section class="panel" aria-label="Subject progress">
+          <h2>Subject Progress</h2>
+          <div class="progress-list" id="subjectProgress"></div>
+        </section>
+
+        <section class="panel" aria-label="Quick actions">
+          <h2>Quick Open</h2>
+          <div class="quick-actions">
+            <a href="Assignment_Exam_Tracker.html">Add Deadline</a>
+            <a href="Timetable_Planner.html">Edit Timetable</a>
+            <a href="Daily_Routine_Planner.html">Daily Routine</a>
+            <a href="Homework_Helper_UI.html">Ask Doubt</a>
+          </div>
+        </section>
+      </aside>
     </main>
   </div>
 
   <script>
-    const frame = document.getElementById("toolFrame");
-    const activeName = document.getElementById("activeName");
-    const activePath = document.getElementById("activePath");
-    const openTool = document.getElementById("openTool");
-    const buttons = Array.from(document.querySelectorAll("[data-tool]"));
+    const trackerStorageKey = "genwiseAssignmentExamTracker";
+    const timetablePlanKey = "genwiseTimetablePlan";
+    const timetableInputKey = "genwiseTimetablePlannerInputs";
+    const progressPrefix = "genwise-timetable-session:";
+    const drawer = document.getElementById("toolDrawer");
+    const backdrop = document.getElementById("drawerBackdrop");
+    let detailData = {
+      assignments: [],
+      exams: [],
+      sessions: [],
+      routine: []
+    };
 
-    buttons.forEach((button) => {
-      button.addEventListener("click", () => {
-        buttons.forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
-        frame.src = button.dataset.tool;
-        activeName.textContent = button.dataset.name;
-        activePath.textContent = button.dataset.tool;
-        openTool.href = button.dataset.tool;
+    function loadJson(key, fallback) {
+      const stored = localStorage.getItem(key);
+      if (!stored) {
+        return fallback;
+      }
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function todayDate() {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function toDateInput(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function dateOnly(value) {
+      const date = new Date(`${value}T00:00:00`);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function addDays(date, amount) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + amount);
+      return next;
+    }
+
+    function daysUntil(value) {
+      return Math.round((dateOnly(value) - todayDate()) / 86400000);
+    }
+
+    function minutesFromTime(value) {
+      const parts = (value || "15:00").split(":").map(Number);
+      return (parts[0] * 60) + parts[1];
+    }
+
+    function timeFromMinutes(value) {
+      const hours = Math.floor(value / 60);
+      const minutes = value % 60;
+      const suffix = hours >= 12 ? "pm" : "am";
+      const displayHours = hours % 12 || 12;
+      return `${displayHours}:${String(minutes).padStart(2, "0")} ${suffix}`;
+    }
+
+    function formatToday() {
+      return todayDate().toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric"
       });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function trackerItems() {
+      return loadJson(trackerStorageKey, []).filter((item) => !item.done && item.dueDate);
+    }
+
+    function todaySessions(plan) {
+      const today = toDateInput(todayDate());
+      const sessions = [];
+      plan.forEach((week) => {
+        week.forEach((day) => {
+          const dayDate = typeof day.date === "string" ? day.date.slice(0, 10) : toDateInput(new Date(day.date));
+          if (dayDate === today) {
+            sessions.push(...(day.sessions || []));
+          }
+        });
+      });
+      return sessions.sort((a, b) => a.start - b.start);
+    }
+
+    function autoCreateTimetableIfNeeded() {
+      const existingPlan = loadJson(timetablePlanKey, []);
+      if (existingPlan.length) {
+        return "Saved timetable already exists.";
+      }
+
+      const upcomingExams = trackerItems()
+        .filter((item) => item.type === "Exam")
+        .filter((item) => daysUntil(item.dueDate) >= 0 && daysUntil(item.dueDate) <= 21)
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+      if (!upcomingExams.length) {
+        return "No exam inside the next 3 weeks, so no automatic timetable was created.";
+      }
+
+      const inputs = loadJson(timetableInputKey, {
+        schoolEnd: "15:00",
+        dayStart: "09:30",
+        sessionLength: "45",
+        breakLength: "20"
+      });
+      const start = todayDate();
+      const planDays = Math.min(21, Math.max(7, daysUntil(upcomingExams[upcomingExams.length - 1].dueDate) + 1));
+      const sessionLength = Number(inputs.sessionLength || 45);
+      const breakLength = Number(inputs.breakLength || 20);
+      const plan = [];
+
+      for (let weekIndex = 0; weekIndex < Math.ceil(planDays / 7); weekIndex += 1) {
+        const week = [];
+        for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
+          const index = (weekIndex * 7) + dayOffset;
+          if (index >= planDays) {
+            break;
+          }
+
+          const date = addDays(start, index);
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+          const dayStart = isWeekend ? minutesFromTime(inputs.dayStart || "09:30") : minutesFromTime(inputs.schoolEnd || "15:00") + 30;
+          const sessions = upcomingExams.slice(0, 2).map((exam, sessionIndex) => ({
+            id: `${toDateInput(date)}-auto-${exam.id}-${sessionIndex}`,
+            sourceId: exam.id,
+            subject: exam.subject || exam.title,
+            title: exam.title,
+            type: "Exam",
+            dueDate: exam.dueDate,
+            priority: exam.priority || "High",
+            start: dayStart + (sessionIndex * (sessionLength + breakLength)),
+            end: dayStart + (sessionIndex * (sessionLength + breakLength)) + sessionLength,
+            breakAfter: sessionIndex === 0 ? breakLength : 0,
+            phase: index < 7 ? "Study" : index < 14 ? "Practice" : "Revision",
+            done: false
+          }));
+          week.push({ date: toDateInput(date), sessions });
+        }
+        plan.push(week);
+      }
+
+      localStorage.setItem(timetablePlanKey, JSON.stringify(plan));
+      return `Auto-created a timetable for ${upcomingExams[0].subject || upcomingExams[0].title}.`;
+    }
+
+    function subjectClass(subject) {
+      const lower = subject.toLowerCase();
+      if (lower.includes("math")) return "math";
+      if (lower.includes("science") && !lower.includes("social")) return "science";
+      if (lower.includes("english")) return "english";
+      if (lower.includes("social") || lower.includes("history") || lower.includes("geo")) return "social";
+      if (lower.includes("computer") || lower.includes("cs") || lower.includes("coding")) return "computer";
+      return "general";
+    }
+
+    function subjectProgress(plan) {
+      const subjects = new Map();
+      plan.flat().forEach((day) => {
+        (day.sessions || []).forEach((session) => {
+          const name = session.subject || "General";
+          const current = subjects.get(name) || { total: 0, done: 0 };
+          current.total += 1;
+          if (session.done || localStorage.getItem(progressPrefix + session.id) === "1") {
+            current.done += 1;
+          }
+          subjects.set(name, current);
+        });
+      });
+
+      return Array.from(subjects.entries()).slice(0, 6);
+    }
+
+    function renderSubjectProgress(plan) {
+      const rows = subjectProgress(plan);
+      const target = document.getElementById("subjectProgress");
+      if (!rows.length) {
+        target.innerHTML = `<div class="subject-row"><div class="subject-line"><span>No subjects yet</span><span>0%</span></div><div class="bar"><div class="fill general"></div></div></div>`;
+        return;
+      }
+
+      target.innerHTML = rows.map(([name, value]) => {
+        const percent = value.total ? Math.round((value.done / value.total) * 100) : 0;
+        return `
+          <div class="subject-row">
+            <div class="subject-line"><span>${escapeHtml(name)}</span><span>${percent}%</span></div>
+            <div class="bar"><div class="fill ${subjectClass(name)}" style="width: ${percent}%"></div></div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderDetail(type) {
+      const titles = {
+        assignments: "Assignments Today",
+        exams: "Exams Today",
+        sessions: "Timetable Sessions",
+        routine: "Checked Routine Tasks"
+      };
+      document.getElementById("detailTitle").textContent = titles[type];
+      document.getElementById("detailList").innerHTML = detailData[type].length
+        ? detailData[type].map((item) => `<li>${escapeHtml(item)}</li>`).join("")
+        : "<li>Nothing here yet.</li>";
+
+      document.querySelectorAll("[data-detail]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.detail === type);
+      });
+    }
+
+    function renderTimeline(sessions) {
+      const timeline = document.getElementById("timeline");
+      if (!sessions.length) {
+        timeline.innerHTML = `<div class="timeline-item"><strong>Free</strong><span>No timetable sessions today.</span></div>`;
+        return;
+      }
+
+      timeline.innerHTML = sessions.slice(0, 4).map((session) => `
+        <div class="timeline-item">
+          <strong>${timeFromMinutes(session.start)}</strong>
+          <span>${escapeHtml(session.subject)}: ${escapeHtml(session.title)}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderCalendar(items) {
+      const calendar = document.getElementById("calendar");
+      const current = todayDate();
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const first = new Date(year, month, 1);
+      const start = new Date(first);
+      start.setDate(1 - first.getDay());
+      const title = current.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      const deadlines = new Map();
+
+      items.forEach((item) => {
+        const key = item.dueDate;
+        if (!deadlines.has(key)) {
+          deadlines.set(key, []);
+        }
+        deadlines.get(key).push(item);
+      });
+
+      document.getElementById("calendarTitle").textContent = title;
+
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        .map((day) => `<div class="day-name">${day}</div>`)
+        .join("");
+      const cells = [];
+      for (let index = 0; index < 42; index += 1) {
+        const date = addDays(start, index);
+        const key = toDateInput(date);
+        const events = deadlines.get(key) || [];
+        const isMuted = date.getMonth() !== month;
+        const isToday = key === toDateInput(current);
+        const classes = ["calendar-day", isMuted ? "muted" : "", isToday ? "today" : ""].filter(Boolean).join(" ");
+        const eventHtml = events.slice(0, 2).map((item) => {
+          const kind = item.type === "Exam" ? "exam" : "assignment";
+          return `<span class="calendar-pill ${kind}">${escapeHtml(item.subject || item.title)}</span>`;
+        }).join("");
+        const more = events.length > 2 ? `<span class="calendar-pill assignment">+${events.length - 2} more</span>` : "";
+        cells.push(`<div class="${classes}"><span class="day-number">${date.getDate()}</span>${eventHtml}${more}</div>`);
+      }
+
+      calendar.innerHTML = `<div class="calendar-grid">${dayNames}${cells.join("")}</div>`;
+    }
+
+    function renderDashboard() {
+      const today = toDateInput(todayDate());
+      const items = trackerItems();
+      const note = autoCreateTimetableIfNeeded();
+      const plan = loadJson(timetablePlanKey, []);
+      const sessions = todaySessions(plan);
+      const doneSessions = sessions.filter((session) => session.done || localStorage.getItem(progressPrefix + session.id) === "1");
+      const assignments = items.filter((item) => item.type === "Assignment" && item.dueDate === today);
+      const exams = items.filter((item) => item.type === "Exam" && item.dueDate === today);
+      const upcomingExams = items.filter((item) => item.type === "Exam" && daysUntil(item.dueDate) > 0 && daysUntil(item.dueDate) <= 21);
+
+      detailData = {
+        assignments: assignments.map((item) => `${item.subject}: ${item.title}`),
+        exams: exams.concat(upcomingExams.slice(0, 3)).map((item) => `${item.subject}: ${item.title} (${daysUntil(item.dueDate)} day${daysUntil(item.dueDate) === 1 ? "" : "s"} left)`),
+        sessions: sessions.map((session) => `${timeFromMinutes(session.start)} ${session.subject}: ${session.title}`),
+        routine: doneSessions.map((session) => `${session.subject}: ${session.title}`)
+      };
+
+      document.getElementById("todayChip").textContent = formatToday();
+      document.getElementById("dashboardSubtitle").textContent = sessions.length
+        ? `${sessions.length} timetable session${sessions.length === 1 ? "" : "s"} planned for today.`
+        : "No timetable sessions yet. Add an exam or open the timetable planner.";
+      document.getElementById("assignmentCount").textContent = assignments.length;
+      document.getElementById("examCount").textContent = exams.length + upcomingExams.length;
+      document.getElementById("sessionCount").textContent = sessions.length;
+      document.getElementById("doneCount").textContent = doneSessions.length;
+      document.getElementById("assignmentHint").textContent = assignments.length ? "Open tracker to finish them" : "No assignments due today";
+      document.getElementById("examHint").textContent = upcomingExams.length ? "Upcoming exam inside 3 weeks" : "No urgent exam";
+      document.getElementById("sessionHint").textContent = sessions.length ? "Planned study blocks" : "No sessions today";
+      document.getElementById("doneHint").textContent = doneSessions.length ? "Already checked off" : "Nothing checked yet";
+      document.getElementById("dashboardNote").textContent = note;
+
+      renderSubjectProgress(plan);
+      renderTimeline(sessions);
+      renderCalendar(items);
+      renderDetail("assignments");
+    }
+
+    function setDrawer(open) {
+      drawer.classList.toggle("open", open);
+      backdrop.classList.toggle("open", open);
+    }
+
+    document.getElementById("openDrawer").addEventListener("click", () => setDrawer(true));
+    document.getElementById("closeDrawer").addEventListener("click", () => setDrawer(false));
+    backdrop.addEventListener("click", () => setDrawer(false));
+    document.getElementById("calendarLink").addEventListener("click", () => setDrawer(false));
+    document.querySelectorAll("[data-detail]").forEach((button) => {
+      button.addEventListener("click", () => renderDetail(button.dataset.detail));
     });
+    document.getElementById("refreshDashboard").addEventListener("click", renderDashboard);
+    renderDashboard();
   </script>
 </body>
 </html>
