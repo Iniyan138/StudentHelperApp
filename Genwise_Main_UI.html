@@ -578,6 +578,14 @@
       color: var(--ink);
     }
 
+    .session-actions,
+    .doubt-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
     .note {
       margin-top: 12px;
       padding: 12px;
@@ -592,6 +600,57 @@
 
     .quick-actions {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .doubt-form {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .doubt-form input,
+    .doubt-form textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      font: 14px Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+
+    .doubt-form input {
+      height: 40px;
+      padding: 0 10px;
+    }
+
+    .doubt-form textarea {
+      min-height: 78px;
+      padding: 10px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    .doubt-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .doubt-item {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .doubt-item strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 4px;
     }
 
     .quick-actions a,
@@ -895,6 +954,9 @@
             <h2>Next Sessions</h2>
           </div>
           <div class="timeline" id="timeline"></div>
+          <div class="session-actions">
+            <button type="button" id="smartRescheduleButton">Smart Reschedule</button>
+          </div>
           <div class="note" id="dashboardNote">Checking saved student data...</div>
         </section>
 
@@ -910,6 +972,20 @@
         <section class="panel" aria-label="Subject progress">
           <h2>Subject Progress</h2>
           <div class="progress-list" id="subjectProgress"></div>
+        </section>
+
+        <section class="panel" aria-label="Doubt bank">
+          <h2>Doubt Bank</h2>
+          <div class="doubt-form">
+            <input id="doubtSubject" type="text" autocomplete="off" placeholder="Subject, optional">
+            <textarea id="doubtText" placeholder="Store a doubt while studying..."></textarea>
+            <div class="doubt-actions">
+              <button type="button" id="saveDoubt">Add Doubt</button>
+              <button type="button" id="viewAllDoubts">View All</button>
+              <button type="button" id="askAllDoubts">Ask All</button>
+            </div>
+          </div>
+          <div class="doubt-list" id="doubtList"></div>
         </section>
 
         <section class="panel" aria-label="Quick actions">
@@ -931,6 +1007,8 @@
     const timetableInputKey = "genwiseTimetablePlannerInputs";
     const progressPrefix = "genwise-timetable-session:";
     const dashboardThemeKey = "genwiseDashboardTheme";
+    const doubtBankKey = "genwiseDoubtBank";
+    const smartRescheduleDateKey = "genwiseSmartRescheduleDate";
     const drawer = document.getElementById("toolDrawer");
     const backdrop = document.getElementById("drawerBackdrop");
     const themePanel = document.getElementById("themePanel");
@@ -944,6 +1022,7 @@
       sessions: [],
       routine: []
     };
+    let showAllDoubts = false;
 
     function loadJson(key, fallback) {
       const stored = localStorage.getItem(key);
@@ -1087,6 +1166,123 @@
 
     function allTrackerItems() {
       return loadJson(trackerStorageKey, []).filter((item) => item.dueDate);
+    }
+
+    function sessionDone(session) {
+      return Boolean(session.done) || localStorage.getItem(progressPrefix + session.id) === "1";
+    }
+
+    function subjectFamily(subject) {
+      const lower = String(subject || "").toLowerCase();
+      if (lower.includes("physics") || lower.includes("chemistry") || lower.includes("biology") || lower.includes("science")) {
+        return "science";
+      }
+      if (lower.includes("history") || lower.includes("geo") || lower.includes("civics") || lower.includes("social")) {
+        return "social";
+      }
+      if (lower.includes("english") || lower.includes("hindi") || lower.includes("language")) {
+        return "language";
+      }
+      if (lower.includes("math")) {
+        return "math";
+      }
+      if (lower.includes("computer") || lower.includes("coding") || lower.includes("cs")) {
+        return "computer";
+      }
+      return lower.trim() || "general";
+    }
+
+    function similarSubject(left, right) {
+      return subjectFamily(left) === subjectFamily(right);
+    }
+
+    function smartRescheduleMissed(manual) {
+      const plan = loadJson(timetablePlanKey, []);
+      if (!plan.length) {
+        return "No saved timetable to reschedule.";
+      }
+
+      const today = todayDate();
+      const missed = [];
+      plan.forEach((week) => {
+        week.forEach((day) => {
+          const dayDate = dateOnly(typeof day.date === "string" ? day.date.slice(0, 10) : toDateInput(new Date(day.date)));
+          if (dayDate < today) {
+            day.sessions = (day.sessions || []).filter((session) => {
+              if (!sessionDone(session)) {
+                missed.push({ session, originalDate: toDateInput(dayDate) });
+                localStorage.removeItem(progressPrefix + session.id);
+                return false;
+              }
+              return true;
+            });
+          }
+        });
+      });
+
+      if (!missed.length) {
+        return manual ? "No missed sessions need rescheduling." : "";
+      }
+
+      let moved = 0;
+      let merged = 0;
+      const futureDays = plan
+        .flat()
+        .filter((day) => dateOnly(typeof day.date === "string" ? day.date.slice(0, 10) : toDateInput(new Date(day.date))) >= today);
+
+      missed.forEach(({ session, originalDate }) => {
+        const duration = Math.max(30, (session.end || 0) - (session.start || 0) || 45);
+        const bestDay = futureDays.find((day) => {
+          const sessions = day.sessions || [];
+          const lastEnd = sessions.length ? Math.max(...sessions.map((item) => item.end || 0)) : 930;
+          return sessions.length < 4 && lastEnd + 20 + duration <= 1260;
+        });
+
+        if (bestDay) {
+          const sessions = bestDay.sessions || [];
+          const lastEnd = sessions.length ? Math.max(...sessions.map((item) => item.end || 0)) : 930;
+          const start = Math.max(930, lastEnd + (sessions.length ? 20 : 0));
+          sessions.push({
+            ...session,
+            id: `${toDateInput(dateOnly(bestDay.date))}-rescheduled-${session.id}`,
+            title: `Catch up: ${session.title}`,
+            start,
+            end: start + duration,
+            breakAfter: 20,
+            done: false,
+            rescheduledFrom: originalDate
+          });
+          bestDay.sessions = sessions.sort((a, b) => a.start - b.start);
+          moved += 1;
+          return;
+        }
+
+        const mergeTarget = futureDays
+          .flatMap((day) => (day.sessions || []).map((futureSession) => ({ day, futureSession })))
+          .find(({ futureSession }) => similarSubject(futureSession.subject, session.subject));
+
+        if (mergeTarget) {
+          mergeTarget.futureSession.title = `${mergeTarget.futureSession.title} + catch up: ${session.title}`;
+          mergeTarget.futureSession.mergedFrom = [...(mergeTarget.futureSession.mergedFrom || []), session.id];
+          merged += 1;
+        }
+      });
+
+      localStorage.setItem(timetablePlanKey, JSON.stringify(plan));
+      localStorage.setItem(smartRescheduleDateKey, toDateInput(today));
+
+      if (!moved && !merged) {
+        return "Missed sessions found, but no future slot or similar subject session was available.";
+      }
+      return `Smart reschedule moved ${moved} session${moved === 1 ? "" : "s"} and merged ${merged}.`;
+    }
+
+    function autoRescheduleOnce() {
+      const today = toDateInput(todayDate());
+      if (localStorage.getItem(smartRescheduleDateKey) === today) {
+        return "";
+      }
+      return smartRescheduleMissed(false);
     }
 
     function todaySessions(plan) {
@@ -1456,10 +1652,71 @@
       }).join("");
     }
 
+    function openDoubts() {
+      return loadJson(doubtBankKey, []);
+    }
+
+    function saveDoubts(doubts) {
+      localStorage.setItem(doubtBankKey, JSON.stringify(doubts));
+    }
+
+    function renderDoubts() {
+      const target = document.getElementById("doubtList");
+      const doubts = openDoubts().filter((doubt) => !doubt.resolved);
+
+      if (!doubts.length) {
+        document.getElementById("viewAllDoubts").textContent = "View All";
+        target.innerHTML = `<div class="doubt-item"><strong>No doubts saved.</strong>Add one while studying, then ask them together later.</div>`;
+        return;
+      }
+
+      const visibleDoubts = showAllDoubts ? doubts : doubts.slice(0, 5);
+      document.getElementById("viewAllDoubts").textContent = showAllDoubts ? "Show Less" : "View All";
+      target.innerHTML = visibleDoubts.map((doubt) => `
+        <div class="doubt-item">
+          <strong>${escapeHtml(doubt.subject || "General doubt")}</strong>
+          ${escapeHtml(doubt.text)}
+        </div>
+      `).join("");
+    }
+
+    function addDoubt() {
+      const subjectInput = document.getElementById("doubtSubject");
+      const textInput = document.getElementById("doubtText");
+      const text = textInput.value.trim();
+      if (!text) {
+        textInput.focus();
+        return;
+      }
+
+      const doubts = openDoubts();
+      doubts.unshift({
+        id: crypto.randomUUID(),
+        subject: subjectInput.value.trim(),
+        text,
+        createdAt: new Date().toISOString(),
+        resolved: false
+      });
+      saveDoubts(doubts);
+      subjectInput.value = "";
+      textInput.value = "";
+      renderDoubts();
+    }
+
+    function askAllDoubts() {
+      const doubts = openDoubts().filter((doubt) => !doubt.resolved);
+      if (!doubts.length) {
+        document.getElementById("doubtText").focus();
+        return;
+      }
+      window.location.href = "Homework_Helper_UI.html?doubts=all";
+    }
+
     function renderDashboard() {
       const today = toDateInput(todayDate());
       const items = trackerItems();
       const note = autoCreateTimetableIfNeeded();
+      const rescheduleNote = autoRescheduleOnce();
       const plan = loadJson(timetablePlanKey, []);
       const sessions = todaySessions(plan);
       const doneSessions = sessions.filter((session) => session.done || localStorage.getItem(progressPrefix + session.id) === "1");
@@ -1488,12 +1745,13 @@
       document.getElementById("examHint").textContent = upcomingExams.length ? "Upcoming exam inside 3 weeks" : "No urgent exam";
       document.getElementById("sessionHint").textContent = sessions.length ? "Planned study blocks" : "No sessions today";
       document.getElementById("doneHint").textContent = doneSessions.length ? "Already checked off" : "Nothing checked yet";
-      document.getElementById("dashboardNote").textContent = note;
+      document.getElementById("dashboardNote").textContent = rescheduleNote || note;
 
       renderSubjectProgress(plan);
       renderTimeline(sessions);
       renderCalendar(items);
       renderSearchResults();
+      renderDoubts();
       renderDetail("assignments");
     }
 
@@ -1533,6 +1791,17 @@
       button.addEventListener("click", () => renderDetail(button.dataset.detail));
     });
     document.getElementById("refreshDashboard").addEventListener("click", renderDashboard);
+    document.getElementById("smartRescheduleButton").addEventListener("click", () => {
+      const message = smartRescheduleMissed(true);
+      renderDashboard();
+      document.getElementById("dashboardNote").textContent = message;
+    });
+    document.getElementById("saveDoubt").addEventListener("click", addDoubt);
+    document.getElementById("viewAllDoubts").addEventListener("click", () => {
+      showAllDoubts = !showAllDoubts;
+      renderDoubts();
+    });
+    document.getElementById("askAllDoubts").addEventListener("click", askAllDoubts);
     applyDashboardTheme();
     renderDashboard();
   </script>

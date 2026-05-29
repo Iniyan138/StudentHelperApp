@@ -726,6 +726,34 @@
       updateStatus();
     }
 
+    function loadDoubtsFromDashboard() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("doubts") !== "all") {
+        return;
+      }
+
+      const stored = localStorage.getItem("genwiseDoubtBank");
+      if (!stored) {
+        return;
+      }
+
+      try {
+        const doubts = JSON.parse(stored).filter((doubt) => !doubt.resolved && doubt.text);
+        if (!doubts.length) {
+          return;
+        }
+
+        userInput.value = [
+          "Please clarify these doubts from my study sessions:",
+          "",
+          ...doubts.map((doubt, index) => `${index + 1}. ${doubt.subject ? `[${doubt.subject}] ` : ""}${doubt.text}`)
+        ].join("\n");
+        addMessage("system", "Loaded saved doubts from the dashboard. Press Send when you are ready.");
+      } catch {
+        localStorage.removeItem("genwiseDoubtBank");
+      }
+    }
+
     saveSettingsButton.addEventListener("click", saveSettings);
     clearChatButton.addEventListener("click", clearChat);
     apiKeyInput.addEventListener("input", () => updateStatus());
@@ -745,6 +773,7 @@
     });
 
     applySettings();
+    loadDoubtsFromDashboard();
     updateTurnCount();
   </script>
   <script>
