@@ -1296,10 +1296,114 @@
       return `${days} day${days === 1 ? "" : "s"} left`;
     }
 
+    function normalizeSearchText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function searchTextForItem(item) {
+      return [
+        item.type,
+        item.priority,
+        item.subject,
+        item.title,
+        item.dueDate,
+        item.notes,
+        item.done ? "completed done finished" : "active pending"
+      ].join(" ");
+    }
+
+    function editDistance(left, right) {
+      if (left === right) {
+        return 0;
+      }
+      if (!left.length) {
+        return right.length;
+      }
+      if (!right.length) {
+        return left.length;
+      }
+
+      const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+      const current = Array(right.length + 1).fill(0);
+
+      for (let row = 1; row <= left.length; row += 1) {
+        current[0] = row;
+        for (let column = 1; column <= right.length; column += 1) {
+          const substitutionCost = left[row - 1] === right[column - 1] ? 0 : 1;
+          current[column] = Math.min(
+            previous[column] + 1,
+            current[column - 1] + 1,
+            previous[column - 1] + substitutionCost
+          );
+        }
+        for (let index = 0; index < previous.length; index += 1) {
+          previous[index] = current[index];
+        }
+      }
+
+      return previous[right.length];
+    }
+
+    function fuzzyWordScore(queryWord, candidateWord) {
+      if (!queryWord || !candidateWord) {
+        return 0;
+      }
+      if (candidateWord === queryWord) {
+        return 120;
+      }
+      if (candidateWord.includes(queryWord)) {
+        return 95;
+      }
+      if (queryWord.length >= 3 && candidateWord.startsWith(queryWord.slice(0, 3))) {
+        return 72;
+      }
+
+      const distance = editDistance(queryWord, candidateWord);
+      const longest = Math.max(queryWord.length, candidateWord.length);
+      const similarity = 1 - (distance / longest);
+      const allowedDistance = queryWord.length <= 4 ? 1 : queryWord.length <= 7 ? 2 : 3;
+
+      return distance <= allowedDistance && similarity >= 0.58
+        ? Math.round(similarity * 80)
+        : 0;
+    }
+
+    function fuzzySearchScore(query, item) {
+      const normalizedQuery = normalizeSearchText(query);
+      const searchable = normalizeSearchText(searchTextForItem(item));
+      if (!normalizedQuery || !searchable) {
+        return 0;
+      }
+      if (searchable.includes(normalizedQuery)) {
+        return 1000 + normalizedQuery.length;
+      }
+
+      const queryWords = normalizedQuery.split(" ").filter(Boolean);
+      const candidateWords = searchable.split(" ").filter((word) => word.length > 1);
+      let total = 0;
+
+      for (const queryWord of queryWords) {
+        let best = 0;
+        for (const candidateWord of candidateWords) {
+          best = Math.max(best, fuzzyWordScore(queryWord, candidateWord));
+        }
+        if (best < 45) {
+          return 0;
+        }
+        total += best;
+      }
+
+      return total;
+    }
+
     function renderSearchResults() {
       const input = document.getElementById("commandSearch");
       const results = document.getElementById("searchResults");
-      const query = input.value.trim().toLowerCase();
+      const query = input.value.trim();
 
       if (!query) {
         results.classList.remove("open");
@@ -1308,34 +1412,31 @@
       }
 
       const matches = allTrackerItems()
-        .filter((item) => {
-          const searchable = [
-            item.type,
-            item.priority,
-            item.subject,
-            item.title,
-            item.dueDate,
-            item.notes,
-            item.done ? "completed done finished" : "active pending"
-          ].join(" ").toLowerCase();
-          return searchable.includes(query);
+        .map((item) => {
+          return {
+            item,
+            score: fuzzySearchScore(query, item)
+          };
         })
+        .filter((result) => result.score > 0)
         .sort((a, b) => {
-          const dayDiff = Math.abs(daysUntil(a.dueDate)) - Math.abs(daysUntil(b.dueDate));
-          return dayDiff || a.dueDate.localeCompare(b.dueDate);
+          const scoreDiff = b.score - a.score;
+          const dayDiff = Math.abs(daysUntil(a.item.dueDate)) - Math.abs(daysUntil(b.item.dueDate));
+          return scoreDiff || dayDiff || a.item.dueDate.localeCompare(b.item.dueDate);
         })
         .slice(0, 8);
 
       results.classList.add("open");
       if (!matches.length) {
-        results.innerHTML = `<div class="result-card"><strong>No matching exams or assignments found.</strong><p class="result-notes">Try a subject, title, priority, date, or a word from your notes.</p></div>`;
+        results.innerHTML = `<div class="result-card"><strong>No close matches found.</strong><p class="result-notes">Try a subject, title, priority, date, or a word from your notes.</p></div>`;
         return;
       }
 
-      results.innerHTML = matches.map((item) => {
+      results.innerHTML = matches.map(({ item, score }) => {
         const typeClass = item.type === "Exam" ? "exam" : "assignment";
         const status = item.done ? "Completed" : "Active";
         const notes = item.notes ? `<p class="result-notes">${escapeHtml(item.notes)}</p>` : `<p class="result-notes">No notes saved for this item.</p>`;
+        const matchType = score >= 1000 ? "Exact match" : "Close match";
         return `
           <article class="result-card ${typeClass}">
             <div class="result-top">
@@ -1347,6 +1448,7 @@
               <span class="result-pill">Due ${escapeHtml(item.dueDate)}</span>
               <span class="result-pill">${escapeHtml(deadlineLabel(item))}</span>
               <span class="result-pill">${status}</span>
+              <span class="result-pill">${matchType}</span>
             </div>
             ${notes}
           </article>
