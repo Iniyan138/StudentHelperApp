@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Homework Helper Chatbot</title>
+  <title>Doubt Clarifier</title>
   <style>
     :root {
       color-scheme: light;
@@ -482,7 +482,7 @@
       <button type="button" class="genwise-nav-close" id="genwiseCloseNav" aria-label="Close menu">x</button>
     </div>
     <a href="Genwise_Main_UI.html">Dashboard <span>Home</span></a>
-    <a href="Homework_Helper_UI.html">Homework Helper <span>Open</span></a>
+    <a href="Homework_Helper_UI.html">Doubt Clarifier <span>Open</span></a>
     <a href="Assignment_Exam_Tracker.html">Exam & Assignment Tracker <span>Open</span></a>
     <a href="Timetable_Planner.html">Timetable Planner <span>Open</span></a>
     <a href="Daily_Routine_Planner.html">Daily Routine Planner <span>Open</span></a>
@@ -493,8 +493,8 @@
       <div class="brand">
         <div class="badge">A+</div>
         <div>
-          <h1>Homework Helper</h1>
-          <p class="subtitle">Ask questions, get guided explanations, and keep the whole chat in one place.</p>
+          <h1>Doubt Clarifier</h1>
+          <p class="subtitle">Ask doubts, get guided explanations, and keep the whole clarification chat in one place.</p>
         </div>
       </div>
       <div class="status" id="status">Add API key</div>
@@ -522,22 +522,23 @@
 
         <div class="controls">
           <button type="button" id="saveSettings">Save settings</button>
+          <button type="button" id="resolveAllDoubts" class="secondary">Resolve All Doubts</button>
           <button type="button" id="clearChat" class="secondary">Clear chat</button>
         </div>
       </aside>
 
-      <section class="chat" aria-label="Homework helper chatbot">
+      <section class="chat" aria-label="Doubt clarifier chatbot">
         <div class="chat-head">
           <strong>Chat</strong>
           <span id="turnCount">0 messages</span>
         </div>
 
         <div class="messages" id="messages">
-          <div class="message system">Type your homework question below. The helper will explain the steps and help you learn the idea.</div>
+          <div class="message system">Type a doubt below. The clarifier will explain the steps and help you learn the idea.</div>
         </div>
 
         <form class="composer" id="chatForm">
-          <textarea id="userInput" placeholder="Ask a homework question..." required></textarea>
+          <textarea id="userInput" placeholder="Ask a doubt..." required></textarea>
           <button type="submit" id="sendButton">Send</button>
         </form>
       </section>
@@ -550,6 +551,7 @@
     const studentLevelInput = document.getElementById("studentLevel");
     const styleInput = document.getElementById("style");
     const saveSettingsButton = document.getElementById("saveSettings");
+    const resolveAllDoubtsButton = document.getElementById("resolveAllDoubts");
     const clearChatButton = document.getElementById("clearChat");
     const form = document.getElementById("chatForm");
     const userInput = document.getElementById("userInput");
@@ -604,7 +606,7 @@
 
     function systemPrompt() {
       return [
-        "You are a patient homework helper for students.",
+        "You are a patient doubt clarifier for students.",
         "Your goal is to help the student learn, not just copy answers.",
         `Student level: ${studentLevelInput.value.trim() || "middle school"}.`,
         `Helper style: ${styleInput.value.trim() || "Explain step by step."}`,
@@ -722,25 +724,22 @@
     function clearChat() {
       chatMessages = [];
       messagesEl.innerHTML = "";
-      addMessage("system", "Chat cleared. Ask a new homework question when you are ready.");
+      addMessage("system", "Chat cleared. Ask a new doubt when you are ready.");
       updateTurnCount();
       updateStatus();
     }
 
-    function loadDoubtsFromDashboard() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("doubts") !== "all") {
-        return;
-      }
-
+    function fillAllDoubts() {
       const stored = localStorage.getItem("genwiseDoubtBank");
       if (!stored) {
+        userInput.focus();
         return;
       }
 
       try {
-        const doubts = JSON.parse(stored).filter((doubt) => !doubt.resolved && doubt.text);
+        const doubts = JSON.parse(stored).filter((doubt) => doubt.text);
         if (!doubts.length) {
+          userInput.focus();
           return;
         }
 
@@ -749,13 +748,21 @@
           "",
           ...doubts.map((doubt, index) => `${index + 1}. ${doubt.subject ? `[${doubt.subject}] ` : ""}${doubt.text}`)
         ].join("\n");
-        addMessage("system", "Loaded saved doubts from the dashboard. Press Send when you are ready.");
+        addMessage("system", "Loaded all saved doubts in numbered format. Press Send when you are ready.");
       } catch {
         localStorage.removeItem("genwiseDoubtBank");
       }
     }
 
+    function loadDoubtsFromDashboard() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("doubts") === "all") {
+        fillAllDoubts();
+      }
+    }
+
     saveSettingsButton.addEventListener("click", saveSettings);
+    resolveAllDoubtsButton.addEventListener("click", fillAllDoubts);
     clearChatButton.addEventListener("click", clearChat);
     apiKeyInput.addEventListener("input", () => updateStatus());
     modelInput.addEventListener("change", saveSettings);

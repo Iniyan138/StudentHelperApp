@@ -240,11 +240,6 @@
       background: var(--panel);
     }
 
-    .doubt.resolved {
-      opacity: 0.68;
-      border-left-color: var(--success);
-    }
-
     .doubt h3 {
       margin: 0;
       font-size: 17px;
@@ -397,7 +392,7 @@
       <button type="button" class="genwise-nav-close" id="genwiseCloseNav" aria-label="Close menu">x</button>
     </div>
     <a href="Genwise_Main_UI.html">Dashboard <span>Home</span></a>
-    <a href="Homework_Helper_UI.html">Homework Helper <span>Open</span></a>
+    <a href="Homework_Helper_UI.html">Doubt Clarifier <span>Open</span></a>
     <a href="Assignment_Exam_Tracker.html">Exam & Assignment Tracker <span>Open</span></a>
     <a href="Timetable_Planner.html">Timetable Planner <span>Open</span></a>
     <a href="Daily_Routine_Planner.html">Daily Routine Planner <span>Open</span></a>
@@ -410,10 +405,10 @@
         <div class="badge">DB</div>
         <div>
           <h1>Doubt Bank</h1>
-          <p class="subtitle">Collect doubts while studying, review them later, or send all of them to the homework helper.</p>
+          <p class="subtitle">Collect doubts while studying, review them later, or send all of them to the doubt clarifier.</p>
         </div>
       </div>
-      <button type="button" id="askAllTop">Ask All Doubts</button>
+      <button type="button" id="askAllTop">Open Doubt Clarifier</button>
     </header>
 
     <main>
@@ -440,18 +435,12 @@
             <strong id="openCount">0</strong>
           </div>
           <div class="stat">
-            <span>Resolved</span>
-            <strong id="resolvedCount">0</strong>
-          </div>
-          <div class="stat">
             <span>Total</span>
             <strong id="totalCount">0</strong>
           </div>
         </div>
         <div class="controls">
-          <button type="button" id="showOpen">Open</button>
-          <button type="button" class="secondary" id="showAll">All</button>
-          <button type="button" class="danger" id="clearResolved">Clear Resolved</button>
+          <button type="button" id="askAllBottom">Ask All Doubts</button>
         </div>
         <div class="doubts" id="doubts"></div>
       </section>
@@ -464,7 +453,6 @@
     const subjectInput = document.getElementById("subject");
     const doubtText = document.getElementById("doubtText");
     const doubtsEl = document.getElementById("doubts");
-    let showResolved = false;
 
     function loadJson(key, fallback) {
       const stored = localStorage.getItem(key);
@@ -506,35 +494,28 @@
 
     function renderDoubts() {
       const all = doubts();
-      const open = all.filter((doubt) => !doubt.resolved);
-      const resolved = all.filter((doubt) => doubt.resolved);
+      const open = all.filter((doubt) => doubt.text);
       document.getElementById("openCount").textContent = open.length;
-      document.getElementById("resolvedCount").textContent = resolved.length;
       document.getElementById("totalCount").textContent = all.length;
 
-      const visible = showResolved ? all : open;
-      if (!visible.length) {
-        doubtsEl.innerHTML = `<div class="empty">${showResolved ? "No doubts saved yet." : "No open doubts. Add one from the form when you get stuck."}</div>`;
+      if (!open.length) {
+        doubtsEl.innerHTML = `<div class="empty">No doubts saved yet. Add one from the form when you get stuck.</div>`;
         return;
       }
 
-      doubtsEl.innerHTML = visible.map((doubt) => `
-        <article class="doubt ${doubt.resolved ? "resolved" : ""}">
+      doubtsEl.innerHTML = open.map((doubt) => `
+        <article class="doubt">
           <div>
             <h3>${escapeHtml(doubt.subject || "General doubt")}</h3>
             <p>${escapeHtml(doubt.text)}</p>
-            <div class="meta">${doubt.resolved ? "Resolved" : "Open"} · ${formatDate(doubt.createdAt)}</div>
+            <div class="meta">Saved - ${formatDate(doubt.createdAt)}</div>
           </div>
           <div class="item-actions">
-            <button type="button" class="secondary" data-toggle="${escapeHtml(doubt.id)}">${doubt.resolved ? "Reopen" : "Resolve"}</button>
             <button type="button" class="danger" data-delete="${escapeHtml(doubt.id)}">Delete</button>
           </div>
         </article>
       `).join("");
 
-      document.querySelectorAll("[data-toggle]").forEach((button) => {
-        button.addEventListener("click", () => toggleDoubt(button.dataset.toggle));
-      });
       document.querySelectorAll("[data-delete]").forEach((button) => {
         button.addEventListener("click", () => deleteDoubt(button.dataset.delete));
       });
@@ -558,12 +539,6 @@
       });
       saveDoubts(all);
       form.reset();
-      showResolved = false;
-      renderDoubts();
-    }
-
-    function toggleDoubt(id) {
-      saveDoubts(doubts().map((doubt) => doubt.id === id ? { ...doubt, resolved: !doubt.resolved } : doubt));
       renderDoubts();
     }
 
@@ -573,7 +548,7 @@
     }
 
     function askAllDoubts() {
-      const open = doubts().filter((doubt) => !doubt.resolved);
+      const open = doubts().filter((doubt) => doubt.text);
       if (!open.length) {
         doubtText.focus();
         return;
@@ -617,19 +592,8 @@
 
     form.addEventListener("submit", addDoubt);
     document.getElementById("clearForm").addEventListener("click", () => form.reset());
-    document.getElementById("showOpen").addEventListener("click", () => {
-      showResolved = false;
-      renderDoubts();
-    });
-    document.getElementById("showAll").addEventListener("click", () => {
-      showResolved = true;
-      renderDoubts();
-    });
-    document.getElementById("clearResolved").addEventListener("click", () => {
-      saveDoubts(doubts().filter((doubt) => !doubt.resolved));
-      renderDoubts();
-    });
     document.getElementById("askAllTop").addEventListener("click", askAllDoubts);
+    document.getElementById("askAllBottom").addEventListener("click", askAllDoubts);
 
     applySavedTheme();
     renderDoubts();
