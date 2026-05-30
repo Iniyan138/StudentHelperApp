@@ -578,8 +578,7 @@
       color: var(--ink);
     }
 
-    .session-actions,
-    .doubt-actions {
+    .session-actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
@@ -600,57 +599,6 @@
 
     .quick-actions {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .doubt-form {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .doubt-form input,
-    .doubt-form textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      color: var(--ink);
-      font: 14px Arial, Helvetica, sans-serif;
-      outline: none;
-    }
-
-    .doubt-form input {
-      height: 40px;
-      padding: 0 10px;
-    }
-
-    .doubt-form textarea {
-      min-height: 78px;
-      padding: 10px;
-      resize: vertical;
-      line-height: 1.4;
-    }
-
-    .doubt-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .doubt-item {
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--soft);
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .doubt-item strong {
-      display: block;
-      color: var(--ink);
-      margin-bottom: 4px;
     }
 
     .quick-actions a,
@@ -860,7 +808,7 @@
     <a href="Assignment_Exam_Tracker.html">Exam & Assignment Tracker <span>Open</span></a>
     <a href="Timetable_Planner.html">Timetable Planner <span>Open</span></a>
     <a href="Daily_Routine_Planner.html">Daily Routine Planner <span>Open</span></a>
-    <a href="#calendarPanel" id="calendarLink">Calendar <span>View</span></a>
+    <a href="Doubt_Bank.html">Doubt Bank <span>Open</span></a>
   </nav>
 
   <div class="app">
@@ -974,27 +922,13 @@
           <div class="progress-list" id="subjectProgress"></div>
         </section>
 
-        <section class="panel" aria-label="Doubt bank">
-          <h2>Doubt Bank</h2>
-          <div class="doubt-form">
-            <input id="doubtSubject" type="text" autocomplete="off" placeholder="Subject, optional">
-            <textarea id="doubtText" placeholder="Store a doubt while studying..."></textarea>
-            <div class="doubt-actions">
-              <button type="button" id="saveDoubt">Add Doubt</button>
-              <button type="button" id="viewAllDoubts">View All</button>
-              <button type="button" id="askAllDoubts">Ask All</button>
-            </div>
-          </div>
-          <div class="doubt-list" id="doubtList"></div>
-        </section>
-
         <section class="panel" aria-label="Quick actions">
           <h2>Quick Open</h2>
           <div class="quick-actions">
             <a href="Assignment_Exam_Tracker.html">Add Deadline</a>
             <a href="Timetable_Planner.html">Edit Timetable</a>
             <a href="Daily_Routine_Planner.html">Daily Routine</a>
-            <a href="Homework_Helper_UI.html">Ask Doubt</a>
+            <a href="Doubt_Bank.html">Doubt Bank</a>
           </div>
         </section>
       </aside>
@@ -1007,7 +941,6 @@
     const timetableInputKey = "genwiseTimetablePlannerInputs";
     const progressPrefix = "genwise-timetable-session:";
     const dashboardThemeKey = "genwiseDashboardTheme";
-    const doubtBankKey = "genwiseDoubtBank";
     const smartRescheduleDateKey = "genwiseSmartRescheduleDate";
     const drawer = document.getElementById("toolDrawer");
     const backdrop = document.getElementById("drawerBackdrop");
@@ -1022,7 +955,6 @@
       sessions: [],
       routine: []
     };
-    let showAllDoubts = false;
 
     function loadJson(key, fallback) {
       const stored = localStorage.getItem(key);
@@ -1652,66 +1584,6 @@
       }).join("");
     }
 
-    function openDoubts() {
-      return loadJson(doubtBankKey, []);
-    }
-
-    function saveDoubts(doubts) {
-      localStorage.setItem(doubtBankKey, JSON.stringify(doubts));
-    }
-
-    function renderDoubts() {
-      const target = document.getElementById("doubtList");
-      const doubts = openDoubts().filter((doubt) => !doubt.resolved);
-
-      if (!doubts.length) {
-        document.getElementById("viewAllDoubts").textContent = "View All";
-        target.innerHTML = `<div class="doubt-item"><strong>No doubts saved.</strong>Add one while studying, then ask them together later.</div>`;
-        return;
-      }
-
-      const visibleDoubts = showAllDoubts ? doubts : doubts.slice(0, 5);
-      document.getElementById("viewAllDoubts").textContent = showAllDoubts ? "Show Less" : "View All";
-      target.innerHTML = visibleDoubts.map((doubt) => `
-        <div class="doubt-item">
-          <strong>${escapeHtml(doubt.subject || "General doubt")}</strong>
-          ${escapeHtml(doubt.text)}
-        </div>
-      `).join("");
-    }
-
-    function addDoubt() {
-      const subjectInput = document.getElementById("doubtSubject");
-      const textInput = document.getElementById("doubtText");
-      const text = textInput.value.trim();
-      if (!text) {
-        textInput.focus();
-        return;
-      }
-
-      const doubts = openDoubts();
-      doubts.unshift({
-        id: crypto.randomUUID(),
-        subject: subjectInput.value.trim(),
-        text,
-        createdAt: new Date().toISOString(),
-        resolved: false
-      });
-      saveDoubts(doubts);
-      subjectInput.value = "";
-      textInput.value = "";
-      renderDoubts();
-    }
-
-    function askAllDoubts() {
-      const doubts = openDoubts().filter((doubt) => !doubt.resolved);
-      if (!doubts.length) {
-        document.getElementById("doubtText").focus();
-        return;
-      }
-      window.location.href = "Homework_Helper_UI.html?doubts=all";
-    }
-
     function renderDashboard() {
       const today = toDateInput(todayDate());
       const items = trackerItems();
@@ -1751,7 +1623,6 @@
       renderTimeline(sessions);
       renderCalendar(items);
       renderSearchResults();
-      renderDoubts();
       renderDetail("assignments");
     }
 
@@ -1768,7 +1639,6 @@
     document.getElementById("openDrawer").addEventListener("click", () => setDrawer(true));
     document.getElementById("closeDrawer").addEventListener("click", () => setDrawer(false));
     backdrop.addEventListener("click", () => setDrawer(false));
-    document.getElementById("calendarLink").addEventListener("click", () => setDrawer(false));
     customizeButton.addEventListener("click", (event) => {
       event.stopPropagation();
       setThemePanel(!themePanel.classList.contains("open"));
@@ -1796,12 +1666,6 @@
       renderDashboard();
       document.getElementById("dashboardNote").textContent = message;
     });
-    document.getElementById("saveDoubt").addEventListener("click", addDoubt);
-    document.getElementById("viewAllDoubts").addEventListener("click", () => {
-      showAllDoubts = !showAllDoubts;
-      renderDoubts();
-    });
-    document.getElementById("askAllDoubts").addEventListener("click", askAllDoubts);
     applyDashboardTheme();
     renderDashboard();
   </script>

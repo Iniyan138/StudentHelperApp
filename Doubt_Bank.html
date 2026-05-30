@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doubt Bank</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5b6675;
+      --line: #d9e2ec;
+      --panel: #ffffff;
+      --soft: #f4f7fb;
+      --accent: #1769aa;
+      --accent-dark: #0f4f82;
+      --success: #1f7a4d;
+      --danger: #a93535;
+      --shadow: 0 18px 48px rgba(39, 55, 77, 0.14);
+      --bg-one: rgba(234, 244, 255, 0.98);
+      --bg-two: rgba(247, 249, 252, 0.98);
+      --bg-three: rgba(239, 246, 242, 0.98);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, var(--bg-one), var(--bg-two) 48%, var(--bg-three)),
+        url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9d8e8' stroke-width='1' opacity='0.45'%3E%3Cpath d='M0 40h120M0 80h120M40 0v120M80 0v120'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    body.theme-dark {
+      color-scheme: dark;
+      --ink: #edf4ff;
+      --muted: #b8c5d8;
+      --line: #314257;
+      --panel: #111c2a;
+      --soft: #17263a;
+      --accent: #4ea3df;
+      --accent-dark: #d8ecff;
+      --success: #70d29d;
+      --danger: #ff8989;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      --bg-one: rgba(10, 19, 32, 0.98);
+      --bg-two: rgba(17, 28, 42, 0.98);
+      --bg-three: rgba(12, 35, 42, 0.98);
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0 14px;
+      background: var(--accent);
+      color: white;
+      font: 800 14px Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: var(--panel);
+      color: var(--accent-dark);
+    }
+
+    button.danger {
+      border-color: rgba(169, 53, 53, 0.35);
+      background: var(--panel);
+      color: var(--danger);
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0 22px 62px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 8px 0 2px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .badge {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 10px 24px rgba(23, 105, 170, 0.24);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 13px;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      font: 14px Arial, Helvetica, sans-serif;
+      outline: none;
+    }
+
+    input {
+      height: 42px;
+      padding: 0 11px;
+    }
+
+    textarea {
+      min-height: 130px;
+      padding: 11px;
+      resize: vertical;
+      line-height: 1.42;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.14);
+    }
+
+    .controls,
+    .item-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      min-height: 82px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      display: grid;
+      align-content: space-between;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .doubts {
+      display: grid;
+      gap: 12px;
+    }
+
+    .doubt {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--accent);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .doubt.resolved {
+      opacity: 0.68;
+      border-left-color: var(--success);
+    }
+
+    .doubt h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .doubt p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 320px;
+      border: 1px dashed #b8c7d8;
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 20px;
+      font-weight: 800;
+    }
+
+    .genwise-nav-button {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 7;
+      width: 52px;
+      min-height: 46px;
+      padding: 0;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--shadow);
+      font: 800 22px Arial, Helvetica, sans-serif;
+    }
+
+    .genwise-nav-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      background: rgba(15, 30, 45, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+
+    .genwise-nav-drawer {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 9;
+      width: min(330px, calc(100vw - 42px));
+      padding: 18px;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      transform: translateX(-105%);
+      transition: transform 160ms ease;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .genwise-nav-drawer.open {
+      transform: translateX(0);
+    }
+
+    .genwise-nav-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .genwise-nav-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .genwise-nav-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .genwise-nav-close {
+      width: 38px;
+      min-height: 38px;
+      padding: 0;
+      background: var(--panel);
+      color: var(--accent-dark);
+    }
+
+    .genwise-nav-drawer a {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--accent-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 0 12px;
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        width: min(100% - 20px, 760px);
+        padding-left: 0;
+        padding-top: 76px;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .doubt {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button type="button" class="genwise-nav-button" id="genwiseOpenNav" aria-label="Open Genwise menu">☰</button>
+  <div class="genwise-nav-backdrop" id="genwiseNavBackdrop"></div>
+  <nav class="genwise-nav-drawer" id="genwiseNavDrawer" aria-label="Genwise tools">
+    <div class="genwise-nav-head">
+      <h2>Genwise Tools</h2>
+      <button type="button" class="genwise-nav-close" id="genwiseCloseNav" aria-label="Close menu">x</button>
+    </div>
+    <a href="Genwise_Main_UI.html">Dashboard <span>Home</span></a>
+    <a href="Homework_Helper_UI.html">Homework Helper <span>Open</span></a>
+    <a href="Assignment_Exam_Tracker.html">Exam & Assignment Tracker <span>Open</span></a>
+    <a href="Timetable_Planner.html">Timetable Planner <span>Open</span></a>
+    <a href="Daily_Routine_Planner.html">Daily Routine Planner <span>Open</span></a>
+    <a href="Doubt_Bank.html">Doubt Bank <span>Open</span></a>
+  </nav>
+
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="badge">DB</div>
+        <div>
+          <h1>Doubt Bank</h1>
+          <p class="subtitle">Collect doubts while studying, review them later, or send all of them to the homework helper.</p>
+        </div>
+      </div>
+      <button type="button" id="askAllTop">Ask All Doubts</button>
+    </header>
+
+    <main>
+      <aside class="panel">
+        <h2>Add doubt</h2>
+        <form id="doubtForm">
+          <label for="subject">Subject</label>
+          <input id="subject" type="text" autocomplete="off" placeholder="Physics, Math, English...">
+
+          <label for="doubtText">Doubt</label>
+          <textarea id="doubtText" placeholder="Write the question you want clarified..." required></textarea>
+
+          <div class="controls">
+            <button type="submit">Save Doubt</button>
+            <button type="button" class="secondary" id="clearForm">Clear</button>
+          </div>
+        </form>
+      </aside>
+
+      <section class="panel">
+        <div class="stats" aria-label="Doubt summary">
+          <div class="stat">
+            <span>Open doubts</span>
+            <strong id="openCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Resolved</span>
+            <strong id="resolvedCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Total</span>
+            <strong id="totalCount">0</strong>
+          </div>
+        </div>
+        <div class="controls">
+          <button type="button" id="showOpen">Open</button>
+          <button type="button" class="secondary" id="showAll">All</button>
+          <button type="button" class="danger" id="clearResolved">Clear Resolved</button>
+        </div>
+        <div class="doubts" id="doubts"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const doubtBankKey = "genwiseDoubtBank";
+    const form = document.getElementById("doubtForm");
+    const subjectInput = document.getElementById("subject");
+    const doubtText = document.getElementById("doubtText");
+    const doubtsEl = document.getElementById("doubts");
+    let showResolved = false;
+
+    function loadJson(key, fallback) {
+      const stored = localStorage.getItem(key);
+      if (!stored) {
+        return fallback;
+      }
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveDoubts(doubts) {
+      localStorage.setItem(doubtBankKey, JSON.stringify(doubts));
+    }
+
+    function doubts() {
+      return loadJson(doubtBankKey, []);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDate(value) {
+      return new Date(value).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function renderDoubts() {
+      const all = doubts();
+      const open = all.filter((doubt) => !doubt.resolved);
+      const resolved = all.filter((doubt) => doubt.resolved);
+      document.getElementById("openCount").textContent = open.length;
+      document.getElementById("resolvedCount").textContent = resolved.length;
+      document.getElementById("totalCount").textContent = all.length;
+
+      const visible = showResolved ? all : open;
+      if (!visible.length) {
+        doubtsEl.innerHTML = `<div class="empty">${showResolved ? "No doubts saved yet." : "No open doubts. Add one from the form when you get stuck."}</div>`;
+        return;
+      }
+
+      doubtsEl.innerHTML = visible.map((doubt) => `
+        <article class="doubt ${doubt.resolved ? "resolved" : ""}">
+          <div>
+            <h3>${escapeHtml(doubt.subject || "General doubt")}</h3>
+            <p>${escapeHtml(doubt.text)}</p>
+            <div class="meta">${doubt.resolved ? "Resolved" : "Open"} · ${formatDate(doubt.createdAt)}</div>
+          </div>
+          <div class="item-actions">
+            <button type="button" class="secondary" data-toggle="${escapeHtml(doubt.id)}">${doubt.resolved ? "Reopen" : "Resolve"}</button>
+            <button type="button" class="danger" data-delete="${escapeHtml(doubt.id)}">Delete</button>
+          </div>
+        </article>
+      `).join("");
+
+      document.querySelectorAll("[data-toggle]").forEach((button) => {
+        button.addEventListener("click", () => toggleDoubt(button.dataset.toggle));
+      });
+      document.querySelectorAll("[data-delete]").forEach((button) => {
+        button.addEventListener("click", () => deleteDoubt(button.dataset.delete));
+      });
+    }
+
+    function addDoubt(event) {
+      event.preventDefault();
+      const text = doubtText.value.trim();
+      if (!text) {
+        doubtText.focus();
+        return;
+      }
+
+      const all = doubts();
+      all.unshift({
+        id: crypto.randomUUID(),
+        subject: subjectInput.value.trim(),
+        text,
+        createdAt: new Date().toISOString(),
+        resolved: false
+      });
+      saveDoubts(all);
+      form.reset();
+      showResolved = false;
+      renderDoubts();
+    }
+
+    function toggleDoubt(id) {
+      saveDoubts(doubts().map((doubt) => doubt.id === id ? { ...doubt, resolved: !doubt.resolved } : doubt));
+      renderDoubts();
+    }
+
+    function deleteDoubt(id) {
+      saveDoubts(doubts().filter((doubt) => doubt.id !== id));
+      renderDoubts();
+    }
+
+    function askAllDoubts() {
+      const open = doubts().filter((doubt) => !doubt.resolved);
+      if (!open.length) {
+        doubtText.focus();
+        return;
+      }
+      window.location.href = "Homework_Helper_UI.html?doubts=all";
+    }
+
+    function applySavedTheme() {
+      const theme = loadJson("genwiseDashboardTheme", null);
+      if (!theme) {
+        return;
+      }
+
+      const hexToRgb = (hex, alpha) => {
+        const value = parseInt(String(hex).replace("#", ""), 16);
+        const red = (value >> 16) & 255;
+        const green = (value >> 8) & 255;
+        const blue = value & 255;
+        return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+      };
+
+      document.body.classList.toggle("theme-dark", theme.mode === "dark");
+      if (theme.mode === "custom") {
+        document.body.style.setProperty("--bg-one", hexToRgb(theme.colorOne || "#dcefff", 0.94));
+        document.body.style.setProperty("--bg-three", hexToRgb(theme.colorTwo || "#e9f8ef", 0.94));
+        document.body.style.setProperty("--accent", theme.colorOne || "#1769aa");
+      }
+    }
+
+    (() => {
+      const drawer = document.getElementById("genwiseNavDrawer");
+      const backdrop = document.getElementById("genwiseNavBackdrop");
+      const setOpen = (open) => {
+        drawer.classList.toggle("open", open);
+        backdrop.classList.toggle("open", open);
+      };
+      document.getElementById("genwiseOpenNav").addEventListener("click", () => setOpen(true));
+      document.getElementById("genwiseCloseNav").addEventListener("click", () => setOpen(false));
+      backdrop.addEventListener("click", () => setOpen(false));
+    })();
+
+    form.addEventListener("submit", addDoubt);
+    document.getElementById("clearForm").addEventListener("click", () => form.reset());
+    document.getElementById("showOpen").addEventListener("click", () => {
+      showResolved = false;
+      renderDoubts();
+    });
+    document.getElementById("showAll").addEventListener("click", () => {
+      showResolved = true;
+      renderDoubts();
+    });
+    document.getElementById("clearResolved").addEventListener("click", () => {
+      saveDoubts(doubts().filter((doubt) => !doubt.resolved));
+      renderDoubts();
+    });
+    document.getElementById("askAllTop").addEventListener("click", askAllDoubts);
+
+    applySavedTheme();
+    renderDoubts();
+  </script>
+</body>
+</html>
