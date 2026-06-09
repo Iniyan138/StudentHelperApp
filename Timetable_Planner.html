@@ -834,8 +834,9 @@ Make short notes</textarea>
 
         <section class="panel edit-panel" id="addPanel" aria-labelledby="addTitle" hidden>
           <h2 id="addTitle">Add session</h2>
-          <label for="addTask">Tracker task</label>
-          <select id="addTask"></select>
+          <label for="addTask">Tracker task or custom task</label>
+          <input id="addTask" type="text" list="addTaskOptions" autocomplete="off" placeholder="Choose a tracker task or type your own">
+          <datalist id="addTaskOptions"></datalist>
           <label for="addDuration">Duration</label>
           <select id="addDuration">
             <option value="30">30 minutes</option>
@@ -1928,28 +1929,60 @@ Make short notes</textarea>
     function openAddPanel(dateValue) {
       addingDate = dateValue;
       document.getElementById("editPanel").hidden = true;
-      const taskSelect = document.getElementById("addTask");
+      const taskInput = document.getElementById("addTask");
+      const taskOptions = document.getElementById("addTaskOptions");
       const trackerItems = openTrackerItems();
 
       if (!trackerItems.length) {
-        taskSelect.innerHTML = "<option value=\"\">No tracker tasks available</option>";
-        taskSelect.disabled = true;
+        taskOptions.innerHTML = "";
+        taskInput.placeholder = "Type a custom study task";
       } else {
-        taskSelect.disabled = false;
-        taskSelect.innerHTML = trackerItems
-          .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.subject)} - ${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`)
+        taskOptions.innerHTML = trackerItems
+          .map((item) => `<option value="${escapeHtml(addTaskLabel(item))}"></option>`)
           .join("");
+        taskInput.placeholder = "Choose a tracker task or type your own";
       }
 
+      taskInput.value = "";
+      taskInput.disabled = false;
       document.getElementById("addPanel").hidden = false;
-      taskSelect.focus();
+      taskInput.focus();
+    }
+
+    function addTaskLabel(item) {
+      return `${item.subject || item.title} - ${item.title} (${item.type})`;
+    }
+
+    function taskFromAddInput(value, phase) {
+      const typed = value.trim();
+      const trackerItems = openTrackerItems();
+      const trackerTask = trackerItems.find((item) => item.id === typed || addTaskLabel(item) === typed);
+
+      if (trackerTask) {
+        return trackerTask;
+      }
+
+      if (!typed) {
+        return null;
+      }
+
+      return {
+        id: `manual-${Date.now()}`,
+        type: phase,
+        priority: "Medium",
+        subject: subjectFromNeed(typed),
+        title: typed,
+        dueDate: "",
+        notes: "Manually added timetable session"
+      };
     }
 
     function saveAddedSession() {
       const day = findDayByDate(addingDate);
-      const selectedId = document.getElementById("addTask").value;
-      const task = openTrackerItems().find((item) => item.id === selectedId);
+      const phase = document.getElementById("addPhase").value;
+      const task = taskFromAddInput(document.getElementById("addTask").value, phase);
       if (!day || !task) {
+        setStatus("Type a task first");
         return;
       }
 
@@ -1957,7 +1990,6 @@ Make short notes</textarea>
       const breakLength = Number(fields.breakLength.value);
       const lastSession = day.sessions[day.sessions.length - 1];
       const start = lastSession ? lastSession.end + breakLength : (isSchoolDay(day.date) ? minutesFromTime(fields.schoolEnd.value) : minutesFromTime(fields.dayStart.value));
-      const phase = document.getElementById("addPhase").value;
 
       if (lastSession && !lastSession.breakAfter) {
         lastSession.breakAfter = breakLength;
