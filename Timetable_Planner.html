@@ -278,6 +278,11 @@
       font-size: 17px;
     }
 
+    button.icon-button.delete-icon {
+      color: var(--danger);
+      font-size: 17px;
+    }
+
     button.danger {
       border-color: rgba(169, 53, 53, 0.35);
       background: white;
@@ -1033,6 +1038,14 @@ Make short notes</textarea>
       return { High: 3, Medium: 2, Low: 1 }[value] || 1;
     }
 
+    function isHighPriority(item) {
+      return priorityRank(item.priority) >= 3;
+    }
+
+    function highPriorityLimit(totalSessions) {
+      return Math.floor(totalSessions * 0.7);
+    }
+
     function minutesFromTime(value) {
       const parts = value.split(":").map(Number);
       return (parts[0] * 60) + parts[1];
@@ -1338,31 +1351,66 @@ Make short notes</textarea>
       const nextExamTasks = nextDayExamTasks(tasks, date);
       const finalSubjects = new Set(nextExamTasks.map((task) => normalizeSubject(task.subject)));
       const availableSubjects = allSubjects.filter((subject) => !finalSubjects.has(subject));
-      const finalCount = Math.min(nextExamTasks.length, slots.length);
-      const normalSlotCount = Math.max(0, slots.length - finalCount);
-      let selectedSubjects = [];
+      const highLimit = highPriorityLimit(slots.length);
+      let highCount = 0;
+      let finalTasks = [];
+      let selectedTasks = [];
 
-      const missingSubjects = allSubjects.filter((subject) => !weekCovered.has(subject) && !finalSubjects.has(subject));
-      missingSubjects.forEach((subject) => {
-        if (selectedSubjects.length < normalSlotCount && !selectedSubjects.includes(subject)) {
-          selectedSubjects.push(subject);
+      nextExamTasks.forEach((task) => {
+        if (finalTasks.length >= slots.length) {
+          return;
+        }
+        if (isHighPriority(task) && highCount >= highLimit) {
+          return;
+        }
+        finalTasks.push(task);
+        if (isHighPriority(task)) {
+          highCount += 1;
         }
       });
 
-      for (let offset = 0; selectedSubjects.length < normalSlotCount && offset < availableSubjects.length; offset += 1) {
+      const normalSlotCount = Math.max(0, slots.length - finalTasks.length);
+
+      const missingSubjects = allSubjects.filter((subject) => !weekCovered.has(subject) && !finalSubjects.has(subject));
+      missingSubjects.forEach((subject) => {
+        const task = taskForSubject(tasks, subject, date);
+        if (!task || selectedTasks.length >= normalSlotCount || selectedTasks.some((item) => normalizeSubject(item.subject) === subject)) {
+          return;
+        }
+        if (isHighPriority(task) && highCount >= highLimit) {
+          return;
+        }
+
+        selectedTasks.push(task);
+        if (isHighPriority(task)) {
+          highCount += 1;
+        }
+      });
+
+      for (let offset = 0; selectedTasks.length < normalSlotCount && offset < availableSubjects.length; offset += 1) {
         const subject = availableSubjects[offset];
-        if (!selectedSubjects.includes(subject)) {
-          selectedSubjects.push(subject);
+        const task = taskForSubject(tasks, subject, date);
+        if (!task || selectedTasks.some((item) => normalizeSubject(item.subject) === subject)) {
+          continue;
+        }
+        if (isHighPriority(task) && highCount >= highLimit) {
+          continue;
+        }
+
+        selectedTasks.push(task);
+        if (isHighPriority(task)) {
+          highCount += 1;
         }
       }
 
-      const finalSessionSubjects = nextExamTasks.slice(0, finalCount).map((task) => normalizeSubject(task.subject));
-      let candidateSubjects = [...selectedSubjects, ...finalSessionSubjects];
+      let candidateTasks = [...selectedTasks, ...finalTasks];
+      let candidateSubjects = candidateTasks.map((task) => normalizeSubject(task.subject));
       let signature = candidateSubjects.join(">");
 
-      while (signature && weekSignatures.has(signature) && selectedSubjects.length) {
-        selectedSubjects.pop();
-        candidateSubjects = [...selectedSubjects, ...finalSessionSubjects];
+      while (signature && weekSignatures.has(signature) && selectedTasks.length) {
+        selectedTasks.pop();
+        candidateTasks = [...selectedTasks, ...finalTasks];
+        candidateSubjects = candidateTasks.map((task) => normalizeSubject(task.subject));
         signature = candidateSubjects.join(">");
       }
 
@@ -1374,22 +1422,16 @@ Make short notes</textarea>
         weekSignatures.add(signature);
       }
 
-      return candidateSubjects.map((subject, index) => {
-        const finalTask = nextExamTasks.find((task) => normalizeSubject(task.subject) === subject);
-        const task = index >= selectedSubjects.length && finalTask ? finalTask : taskForSubject(tasks, subject, date);
-        if (!task) {
-          return null;
-        }
-
+      return candidateTasks.map((task, index) => {
         const slot = slots[index];
-        weekCovered.add(subject);
+        weekCovered.add(normalizeSubject(task.subject));
         return {
           ...task,
           id: `${toDateInput(date)}-${index}-${task.sourceId}-${phase}`,
           start: slot.start,
           end: slot.end,
           breakAfter: slot.breakAfter,
-          compulsory: Boolean(finalTask && index >= selectedSubjects.length),
+          compulsory: index >= selectedTasks.length,
           phase
         };
       }).filter(Boolean);
@@ -1409,10 +1451,15 @@ Make short notes</textarea>
       const examTasks = tasks
         .filter((task) => task.type === "Exam")
         .sort((a, b) => taskScore(b, date) - taskScore(a, date));
+      const highLimit = highPriorityLimit(slots.length);
+      let highCount = sessions.filter(isHighPriority).length;
 
       while (sessions.length < 2 && openSlots.length && examTasks.length) {
         const slot = openSlots.shift();
-        const task = examTasks[(sessions.length - 1 + examTasks.length) % examTasks.length];
+        const task = examTasks.find((item) => !isHighPriority(item) || highCount < highLimit);
+        if (!task) {
+          break;
+        }
         sessions.push({
           ...task,
           id: `${toDateInput(date)}-${sessions.length}-${task.sourceId}-exam-minimum`,
@@ -1423,6 +1470,9 @@ Make short notes</textarea>
           phase: "Revision",
           examMinimum: true
         });
+        if (isHighPriority(task)) {
+          highCount += 1;
+        }
       }
 
       return sessions.sort((a, b) => a.start - b.start);
@@ -1496,7 +1546,25 @@ Make short notes</textarea>
         usedInWeek.add(subject);
       });
 
-      return enforceUniqueDailySchedules(week);
+      return enforceUniqueDailySchedules(enforceHighPriorityBalance(week));
+    }
+
+    function enforceHighPriorityBalance(week) {
+      week.forEach((day) => {
+        let highCount = day.sessions.filter(isHighPriority).length;
+
+        for (let index = day.sessions.length - 1; highCount > highPriorityLimit(day.sessions.length) && index >= 0; index -= 1) {
+          const session = day.sessions[index];
+          if (!isHighPriority(session) || session.compulsory) {
+            continue;
+          }
+
+          day.sessions.splice(index, 1);
+          highCount -= 1;
+        }
+      });
+
+      return week;
     }
 
     function findCoverageTarget(week, subject) {
@@ -1627,6 +1695,10 @@ Make short notes</textarea>
         button.addEventListener("click", () => openEditPanel(button.dataset.editSession));
       });
 
+      document.querySelectorAll("button[data-delete-session]").forEach((button) => {
+        button.addEventListener("click", () => deleteSession(button.dataset.deleteSession));
+      });
+
       document.querySelectorAll("button[data-add-day]").forEach((button) => {
         button.addEventListener("click", () => openAddPanel(button.dataset.addDay));
       });
@@ -1694,6 +1766,7 @@ Make short notes</textarea>
             <span>${timeFromMinutes(session.start)}-${timeFromMinutes(session.end)}:${finalText} ${phaseVerb(session.phase)} ${escapeHtml(session.title)}${deadlineText}.${breakText}</span>
           </label>
           <button type="button" class="secondary small icon-button edit-icon" data-edit-session="${escapeHtml(session.id)}" title="Edit session" aria-label="Edit session">✎</button>
+          <button type="button" class="secondary small icon-button delete-icon" data-delete-session="${escapeHtml(session.id)}" title="Delete session" aria-label="Delete session">&#128465;</button>
         </div>
       `;
     }
@@ -1818,6 +1891,27 @@ Make short notes</textarea>
     function cancelSessionEdit() {
       document.getElementById("editPanel").hidden = true;
       editingSessionId = null;
+    }
+
+    function deleteSession(id) {
+      for (const week of currentPlan) {
+        for (const day of week) {
+          const sessionIndex = day.sessions.findIndex((item) => item.id === id);
+          if (sessionIndex === -1) {
+            continue;
+          }
+
+          day.sessions.splice(sessionIndex, 1);
+          localStorage.removeItem(progressPrefix + id);
+          if (editingSessionId === id) {
+            cancelSessionEdit();
+          }
+          saveCurrentPlan();
+          renderPlan(currentPlan, openTrackerItems(), parseActivities());
+          setStatus("Session deleted");
+          return;
+        }
+      }
     }
 
     function findDayByDate(value) {
