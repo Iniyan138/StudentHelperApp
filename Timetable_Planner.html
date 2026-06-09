@@ -497,13 +497,14 @@
 
     .session-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 8px;
       align-items: start;
     }
 
     .session-row .goal {
       margin: 8px 0;
+      min-width: 0;
     }
 
     .edit-panel {
@@ -586,7 +587,7 @@
       }
 
       .session-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr) auto auto;
       }
     }
 
@@ -1304,13 +1305,39 @@ Make short notes</textarea>
       });
     }
 
+    function isTaskAvailableOnDate(task, date) {
+      if (!task.dueDate) {
+        return true;
+      }
+      const due = dateOnly(task.dueDate);
+      return task.type === "Exam" ? due > date : due >= date;
+    }
+
+    function futureExamSubjects(tasks, date) {
+      return new Set(tasks
+        .filter((task) => task.type === "Exam" && task.dueDate && dateOnly(task.dueDate) > date)
+        .map((task) => normalizeSubject(task.subject)));
+    }
+
+    function finalRevisionCount(nextExamTasks, tasks, date, slots, highLimit, highCount) {
+      if (!nextExamTasks.length || !slots.length) {
+        return 0;
+      }
+
+      const futureSubjects = futureExamSubjects(tasks, date);
+      const onlyOneExamSubjectLeft = nextExamTasks.length === 1 && futureSubjects.size === 1;
+      const targetCount = onlyOneExamSubjectLeft ? Math.max(1, slots.length - 1) : nextExamTasks.length;
+      const highRoom = isHighPriority(nextExamTasks[0]) ? Math.max(0, highLimit - highCount) : targetCount;
+      return Math.min(targetCount, slots.length, highRoom);
+    }
+
     function chooseTask(tasks, date, usedSubjects, requiredTask, blockedSubjects = new Set(), requiredSubject = "") {
       if (requiredTask && requiredTask.remaining > 0) {
         requiredTask.remaining -= 1;
         return requiredTask;
       }
 
-      const available = tasks.filter((task) => task.remaining > 0 && (!task.dueDate || dateOnly(task.dueDate) >= date));
+      const available = tasks.filter((task) => task.remaining > 0 && isTaskAvailableOnDate(task, date));
       if (!available.length) {
         return null;
       }
@@ -1347,18 +1374,21 @@ Make short notes</textarea>
       return subject.trim().toLowerCase();
     }
 
-    function uniqueSubjects(tasks) {
-      return Array.from(new Set(tasks.map((task) => normalizeSubject(task.subject)).filter(Boolean)));
+    function uniqueSubjects(tasks, date) {
+      return Array.from(new Set(tasks
+        .filter((task) => isTaskAvailableOnDate(task, date))
+        .map((task) => normalizeSubject(task.subject))
+        .filter(Boolean)));
     }
 
     function taskForSubject(tasks, subject, date) {
       return tasks
-        .filter((task) => normalizeSubject(task.subject) === subject)
+        .filter((task) => normalizeSubject(task.subject) === subject && isTaskAvailableOnDate(task, date))
         .sort((a, b) => taskScore(b, date) - taskScore(a, date))[0] || null;
     }
 
     function rankedSubjects(tasks, date) {
-      return uniqueSubjects(tasks).sort((a, b) => {
+      return uniqueSubjects(tasks, date).sort((a, b) => {
         const taskA = taskForSubject(tasks, a, date);
         const taskB = taskForSubject(tasks, b, date);
         return (taskB ? taskScore(taskB, date) : 0) - (taskA ? taskScore(taskA, date) : 0);
@@ -1374,19 +1404,21 @@ Make short notes</textarea>
       let highCount = 0;
       let finalTasks = [];
       let selectedTasks = [];
+      const targetFinalCount = finalRevisionCount(nextExamTasks, tasks, date, slots, highLimit, highCount);
 
-      nextExamTasks.forEach((task) => {
-        if (finalTasks.length >= slots.length) {
-          return;
+      for (let index = 0; finalTasks.length < targetFinalCount; index += 1) {
+        const task = nextExamTasks[index % nextExamTasks.length];
+        if (!task || (isHighPriority(task) && highCount >= highLimit)) {
+          break;
         }
-        if (isHighPriority(task) && highCount >= highLimit) {
-          return;
-        }
-        finalTasks.push(task);
+        finalTasks.push({
+          ...task,
+          finalRepeat: finalTasks.length
+        });
         if (isHighPriority(task)) {
           highCount += 1;
         }
-      });
+      }
 
       const normalSlotCount = Math.max(0, slots.length - finalTasks.length);
 
@@ -1468,7 +1500,7 @@ Make short notes</textarea>
       const usedStarts = new Set(sessions.map((session) => session.start));
       const openSlots = slots.filter((slot) => !usedStarts.has(slot.start));
       const examTasks = tasks
-        .filter((task) => task.type === "Exam")
+        .filter((task) => task.type === "Exam" && isTaskAvailableOnDate(task, date))
         .sort((a, b) => taskScore(b, date) - taskScore(a, date));
       const highLimit = highPriorityLimit(slots.length);
       let highCount = sessions.filter(isHighPriority).length;
@@ -1546,16 +1578,15 @@ Make short notes</textarea>
           return;
         }
 
-        const replacementTask = tasks.find((task) => normalizeSubject(task.subject) === subject);
-        const target = findCoverageTarget(week, subject);
-        if (!replacementTask || !target) {
+        const target = findCoverageTarget(week, subject, tasks);
+        if (!target) {
           return;
         }
 
         const session = target.day.sessions[target.index];
         target.day.sessions[target.index] = {
-          ...replacementTask,
-          id: `${toDateInput(target.day.date)}-${target.index}-${replacementTask.sourceId}-coverage`,
+          ...target.task,
+          id: `${toDateInput(target.day.date)}-${target.index}-${target.task.sourceId}-coverage`,
           start: session.start,
           end: session.end,
           breakAfter: session.breakAfter,
@@ -1586,8 +1617,12 @@ Make short notes</textarea>
       return week;
     }
 
-    function findCoverageTarget(week, subject) {
+    function findCoverageTarget(week, subject, tasks) {
       for (const day of week) {
+        const replacementTask = taskForSubject(tasks, subject, day.date);
+        if (!replacementTask) {
+          continue;
+        }
         const daySubjects = new Set(day.sessions.map((session) => normalizeSubject(session.subject)));
         if (daySubjects.has(subject)) {
           continue;
@@ -1595,7 +1630,7 @@ Make short notes</textarea>
 
         for (let index = day.sessions.length - 1; index >= 0; index -= 1) {
           if (!day.sessions[index].compulsory) {
-            return { day, index };
+            return { day, index, task: replacementTask };
           }
         }
       }
